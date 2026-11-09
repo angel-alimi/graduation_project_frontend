@@ -19,8 +19,9 @@ class SignupInfoScreen extends StatefulWidget {
 
 class _SignupInfoScreenState extends State<SignupInfoScreen> {
   final _data = SignupData();
-  final _name = TextEditingController();
-  String? _eName, _eDob, _eCity, _eGender;
+  final _first = TextEditingController();
+  final _last = TextEditingController();
+  String? _eFirst, _eLast, _eDob, _eCity, _eGender;
   bool _agreeTerms = false, _agreeData = false;
   bool get _agreed => _agreeTerms && _agreeData;
 
@@ -32,7 +33,8 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
 
   @override
   void dispose() {
-    _name.dispose();
+    _first.dispose();
+    _last.dispose();
     super.dispose();
   }
 
@@ -70,8 +72,10 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
   void _submit() {
     final app = context.appRead;
     setState(() {
-      _data.fullName = _name.text.trim();
-      _eName = _data.fullName.length < 3 ? app.t('eName') : null;
+      final first = _first.text.trim(), last = _last.text.trim();
+      _data.fullName = '$first $last';
+      _eFirst = first.length < 2 ? app.t('eFirstName') : null;
+      _eLast = last.length < 2 ? app.t('eLastName') : null;
       if (_data.birthDate == null) {
         _eDob = app.t('eDob');
       } else {
@@ -81,7 +85,7 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
       _eCity = _data.cityId == null ? app.t('eCity') : null;
       _eGender = _data.gender == null ? app.t('eGender') : null;
     });
-    if ([_eName, _eDob, _eCity, _eGender].every((e) => e == null) && _agreed) {
+    if ([_eFirst, _eLast, _eDob, _eCity, _eGender].every((e) => e == null) && _agreed) {
       _data
         ..termsVersion = kTermsVersion
         ..termsAcceptedAt = DateTime.now();
@@ -105,14 +109,34 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
                 const SizedBox(height: 20),
                 ScreenTitle(app.t('infoTitle'), subtitle: app.t('infoSub')),
                 const SizedBox(height: 20),
-                FieldLabel(app.t('fullName')),
-                TextField(
-                  controller: _name,
-                  textCapitalization: TextCapitalization.words,
-                  autofillHints: const [AutofillHints.name],
-                  decoration: InputDecoration(hintText: app.t('namePh'), errorText: _eName),
-                  onChanged: (_) { if (_eName != null) setState(() => _eName = null); },
-                ),
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      FieldLabel(app.t('firstName')),
+                      TextField(
+                        controller: _first,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.givenName],
+                        decoration: InputDecoration(hintText: app.t('firstNamePh'), errorText: _eFirst),
+                        onChanged: (_) { if (_eFirst != null) setState(() => _eFirst = null); },
+                      ),
+                    ]),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      FieldLabel(app.t('lastName')),
+                      TextField(
+                        controller: _last,
+                        textCapitalization: TextCapitalization.words,
+                        autofillHints: const [AutofillHints.familyName],
+                        decoration: InputDecoration(hintText: app.t('lastNamePh'), errorText: _eLast),
+                        onChanged: (_) { if (_eLast != null) setState(() => _eLast = null); },
+                      ),
+                    ]),
+                  ),
+                ]),
                 const SizedBox(height: 16),
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(
