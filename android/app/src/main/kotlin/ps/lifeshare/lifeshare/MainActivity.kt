@@ -1,0 +1,5 @@
+package ps.lifeshare.lifeshare
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
