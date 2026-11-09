@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
 import '../../widgets/search_picker.dart';
+import '../terms_screen.dart';
 import 'signup_phone_screen.dart';
 
 /// Sign-up step 1: name, birth date, city, gender, blood type, last donation.
@@ -20,6 +21,8 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
   final _data = SignupData();
   final _name = TextEditingController();
   String? _eName, _eDob, _eCity, _eGender;
+  bool _agreeTerms = false, _agreeData = false;
+  bool get _agreed => _agreeTerms && _agreeData;
 
   @override
   void initState() {
@@ -78,7 +81,10 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
       _eCity = _data.cityId == null ? app.t('eCity') : null;
       _eGender = _data.gender == null ? app.t('eGender') : null;
     });
-    if ([_eName, _eDob, _eCity, _eGender].every((e) => e == null)) {
+    if ([_eName, _eDob, _eCity, _eGender].every((e) => e == null) && _agreed) {
+      _data
+        ..termsVersion = kTermsVersion
+        ..termsAcceptedAt = DateTime.now();
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => SignupPhoneScreen(data: _data)));
     }
   }
@@ -119,7 +125,7 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
                           decoration: InputDecoration(
                             errorText: _eDob,
                             errorMaxLines: 2,
-                            suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.muted),
+                            suffixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.muted),
                           ),
                           child: Text(
                             dob == null ? app.t('pickDate') : formatYmd(dob),
@@ -184,9 +190,9 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
                       helperText: app.t('lastDonationHelp'),
                       helperMaxLines: 2,
                       suffixIcon: lastDonation == null
-                          ? const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.muted)
+                          ? Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.muted)
                           : IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                              icon: Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
                               tooltip: app.t('clear'),
                               onPressed: () => setState(() => _data.lastDonationDate = null),
                             ),
@@ -201,12 +207,19 @@ class _SignupInfoScreenState extends State<SignupInfoScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 18),
+                TermsAgreeTile(value: _agreeTerms, onChanged: (v) => setState(() => _agreeTerms = v)),
+                TermsAgreeTile(
+                  value: _agreeData,
+                  text: app.t('agreeData'),
+                  onChanged: (v) => setState(() => _agreeData = v),
+                ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: PrimaryButton(label: app.t('next'), onPressed: _submit),
+            child: PrimaryButton(label: app.t('next'), onPressed: _agreed ? _submit : null),
           ),
         ]),
       ),

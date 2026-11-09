@@ -7,7 +7,7 @@ import '../../widgets/common.dart';
 import '../../widgets/mascot.dart';
 import '../../widgets/request_card.dart';
 import '../home_shell.dart';
-import '../sheets/new_request_sheet.dart';
+import '../sheets/contact_sheet.dart';
 import '../sheets/request_detail_sheet.dart';
 
 class RequestsTab extends StatefulWidget {
@@ -68,21 +68,6 @@ class _RequestsTabState extends State<RequestsTab> {
           onChanged: (v) => shell.go(Tabs.requests, segment: v),
         ),
         const SizedBox(height: 14),
-        PrimaryButton(
-          label: app.t('newRequest'),
-          icon: Icons.add_rounded,
-          onPressed: () async {
-            final created = await showNewRequestSheet(context);
-            if (created == true) {
-              if (_segment == 0) {
-                _load();
-              } else {
-                shell.go(Tabs.requests, segment: 0);
-              }
-            }
-          },
-        ),
-        const SizedBox(height: 14),
         Expanded(
           child: FutureBuilder<List<BloodRequest>>(
             future: _future,
@@ -113,20 +98,33 @@ class _RequestsTabState extends State<RequestsTab> {
                     if (_segment == 0) {
                       return RequestCard(
                         request: r,
-                        action: SoftButton(label: app.t('cancelRequest'), onPressed: () => _cancel(r)),
+                        action: SoftButton(
+                          label: app.t('cancelRequest'),
+                          destructive: true,
+                          onPressed: () => _cancel(r),
+                        ),
                       );
                     }
                     final done = r.myResponse != null;
                     return RequestCard(
                       request: r,
                       onTap: () => showRequestDetailSheet(context, r).then((_) => _load()),
-                      action: SoftButton(
-                        label: done
-                            ? app.t(r.myResponse == ResponseStatus.ineligible ? 'ineligibleTag' : 'responded')
-                            : app.t('canDonate'),
-                        done: done,
-                        onPressed: () => showRequestDetailSheet(context, r, startWithResponse: true).then((_) => _load()),
-                      ),
+                      action: Row(mainAxisSize: MainAxisSize.min, children: [
+                        SoftButton(
+                          label: app.t('contact'),
+                          onPressed: () => showContactSheet(context, r),
+                        ),
+                        const SizedBox(width: 8),
+                        done
+                            ? SoftButton(
+                                label: app.t(r.myResponse == ResponseStatus.ineligible ? 'ineligibleTag' : 'responded'),
+                                done: true,
+                              )
+                            : AcceptButton(
+                                label: app.t('canDonate'),
+                                onPressed: () => showRequestDetailSheet(context, r, startWithResponse: true).then((_) => _load()),
+                              ),
+                      ]),
                     );
                   },
                 ),
@@ -162,9 +160,9 @@ class _Segmented extends StatelessWidget {
             heightFactor: 1,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: const [BoxShadow(color: Color(0x1F1F2430), blurRadius: 3, offset: Offset(0, 1))],
+                boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 3, offset: Offset(0, 1))],
               ),
             ),
           ),

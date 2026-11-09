@@ -49,6 +49,10 @@ class RemoteApi implements LifeShareApi {
             as Map<String, dynamic>,
       );
 
+  @override
+  Future<List<Donation>> donations() async =>
+      _list(await client.get('/api/users/me/donations'), Donation.fromJson);
+
   // ---------- requests ----------
   @override
   Future<List<BloodRequest>> feed({Urgency? urgency, String? query}) async => _list(

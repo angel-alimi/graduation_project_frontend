@@ -59,7 +59,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const BackSquareButton(),
               const SizedBox(width: 12),
               Expanded(child: Text(app.t('notifications'), style: Theme.of(context).textTheme.titleLarge)),
-              TextButton(onPressed: _markAll, child: Text(app.t('markAllRead'))),
+              // Plain, quiet text action (no accent colour)
+              InkWell(
+                onTap: _markAll,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Text(app.t('markAllRead'),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.muted)),
+                ),
+              ),
             ]),
             const SizedBox(height: 10),
             if (!app.notificationsOn)
@@ -108,27 +117,21 @@ class _NotificationTile extends StatelessWidget {
     final bt = n.bloodType?.display ?? '';
     final hospital = n.hospitalId == null ? '' : app.hospitalName(n.hospitalId!);
 
-    late final IconData icon;
-    late final Color bg, fg;
     late final String title, body;
     switch (n.type) {
       case NotificationType.match:
-        icon = Icons.water_drop_outlined; bg = AppColors.soft; fg = AppColors.red;
         title = app.t('nMatch');
         body = app.t('nMatchB', {'name': n.personName ?? '', 'bt': bt, 'hospital': hospital});
         break;
       case NotificationType.requestPosted:
-        icon = Icons.assignment_turned_in_outlined; bg = AppColors.greenBg; fg = AppColors.green;
         title = app.t('nPosted');
         body = app.t('nPostedB', {'bt': bt, 'hospital': hospital});
         break;
       case NotificationType.reminder:
-        icon = Icons.event_outlined; bg = AppColors.amberBg; fg = AppColors.amber;
         title = app.t('nReminder');
         body = app.t('nReminderB');
         break;
       case NotificationType.welcome:
-        icon = Icons.favorite_border_rounded; bg = AppColors.indigoBg; fg = AppColors.indigo;
         title = app.t('nWelcome');
         body = app.t('nWelcomeB');
         break;
@@ -139,15 +142,13 @@ class _NotificationTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          IconBox(icon, size: 40, bg: bg, fg: fg),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+              Text(title, style: TextStyle(fontSize: 14, fontWeight: n.read ? FontWeight.w600 : FontWeight.w800)),
               const SizedBox(height: 3),
-              Text(body, style: const TextStyle(fontSize: 13, height: 1.55, color: AppColors.muted)),
+              Text(body, style: TextStyle(fontSize: 13, height: 1.55, color: AppColors.muted)),
               const SizedBox(height: 3),
-              Text(app.timeAgo(n.createdAt), style: const TextStyle(fontSize: 12, color: AppColors.hint)),
+              Text(app.timeAgo(n.createdAt), style: TextStyle(fontSize: 12, color: AppColors.hint)),
             ]),
           ),
           if (!n.read)
@@ -155,7 +156,7 @@ class _NotificationTile extends StatelessWidget {
               margin: const EdgeInsetsDirectional.only(start: 8, top: 6),
               width: 8,
               height: 8,
-              decoration: const BoxDecoration(color: AppColors.red, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
             ),
         ]),
       ),

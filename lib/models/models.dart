@@ -124,7 +124,13 @@ class SignupData {
   DateTime? lastDonationDate; // null = never donated
   String phone = '';
 
+  /// Terms the user ticked at sign-up (version + time), sent so the backend can prove consent.
+  String? termsVersion;
+  DateTime? termsAcceptedAt;
+
   Map<String, dynamic> toJson() => {
+        'termsVersion': termsVersion,
+        'termsAcceptedAt': termsAcceptedAt?.toUtc().toIso8601String(),
         'fullName': fullName,
         'gender': gender!.apiName,
         'birthDate': _ymd(birthDate!),
@@ -150,6 +156,12 @@ class AuthResult {
 class BloodRequest {
   final int id;
   final String requesterName;
+
+  /// Requester's local mobile number (9 digits, e.g. 591234567), shared with matched donors.
+  final String? requesterPhone;
+
+  /// Extra numbers the requester added (e.g. a family member), local 9 digits.
+  final List<String> contactPhones;
   final int hospitalId;
   final int cityId;
   final BloodType bloodType;
@@ -172,6 +184,8 @@ class BloodRequest {
   const BloodRequest({
     required this.id,
     required this.requesterName,
+    this.requesterPhone,
+    this.contactPhones = const [],
     required this.hospitalId,
     required this.cityId,
     required this.bloodType,
@@ -186,10 +200,18 @@ class BloodRequest {
     this.myResponse,
   });
 
+  /// Every number to reach the requester on: theirs first, then the extras.
+  List<String> get allPhones => {
+        if ((requesterPhone ?? '').isNotEmpty) requesterPhone!,
+        ...contactPhones.where((p) => p.isNotEmpty),
+      }.toList();
+
   BloodRequest copyWith({RequestStatus? status, ResponseStatus? myResponse}) =>
       BloodRequest(
         id: id,
         requesterName: requesterName,
+        requesterPhone: requesterPhone,
+        contactPhones: contactPhones,
         hospitalId: hospitalId,
         cityId: cityId,
         bloodType: bloodType,
@@ -207,6 +229,8 @@ class BloodRequest {
   factory BloodRequest.fromJson(Map<String, dynamic> j) => BloodRequest(
         id: j['id'] as int,
         requesterName: j['requesterName'] as String,
+        requesterPhone: j['requesterPhone'] as String?,
+        contactPhones: ((j['contactPhones'] as List?) ?? const []).cast<String>(),
         hospitalId: j['hospitalId'] as int,
         cityId: j['cityId'] as int,
         bloodType: BloodType.fromApi(j['bloodType'] as String),
@@ -234,6 +258,9 @@ class NewRequest {
   final DateTime neededAt;
   final String? note;
 
+  /// Optional extra contact numbers (local 9 digits). The requester's own number is always used.
+  final List<String> contactPhones;
+
   const NewRequest({
     required this.bloodType,
     required this.unitsNeeded,
@@ -242,9 +269,11 @@ class NewRequest {
     required this.neededAt,
     this.patientName,
     this.note,
+    this.contactPhones = const [],
   });
 
   Map<String, dynamic> toJson() => {
+        'contactPhones': contactPhones,
         'patientName': (patientName ?? '').trim().isEmpty ? null : patientName!.trim(),
         'bloodType': bloodType.apiName,
         'unitsNeeded': unitsNeeded,
@@ -333,3 +362,20 @@ String formatTime(int hour, int minute, String lang) {
 
 String formatDateTime(DateTime d, String lang) =>
     '${formatDate(d, lang)} · ${formatTime(d.hour, d.minute, lang)}';
+
+/// One past donation in the user's donation record.
+class Donation {
+  final int id;
+  final DateTime date;
+
+  /// Where the user donated, when known.
+  final int? hospitalId;
+
+  const Donation({required this.id, required this.date, this.hospitalId});
+
+  factory Donation.fromJson(Map<String, dynamic> j) => Donation(
+        id: j['id'] as int,
+        date: DateTime.parse(j['date'] as String),
+        hospitalId: j['hospitalId'] as int?,
+      );
+}

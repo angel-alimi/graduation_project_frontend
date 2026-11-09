@@ -44,7 +44,7 @@ class _OtpScreenState extends State<OtpScreen> {
     } else {
       setState(() => _left = AppConfig.otpResendSeconds);
     }
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+    _timer = Timer.periodic(Duration(seconds: 1), (t) {
       if (_left <= 1) t.cancel();
       if (mounted) setState(() => _left--);
     });
@@ -76,7 +76,7 @@ class _OtpScreenState extends State<OtpScreen> {
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 450),
+          transitionDuration: Duration(milliseconds: 450),
           pageBuilder: (_, __, ___) => const HomeShell(),
           transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
         ),
@@ -114,7 +114,7 @@ class _OtpScreenState extends State<OtpScreen> {
             const SizedBox(height: 14),
             Text(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
-            Text(sub, style: const TextStyle(color: AppColors.muted)),
+            Text(sub, style: TextStyle(color: AppColors.muted)),
           ]),
         ),
       ),
@@ -143,12 +143,12 @@ class _OtpScreenState extends State<OtpScreen> {
               children: [
                 StepHeader(step: 3, showSteps: _isSignup),
                 const SizedBox(height: 24),
-                const Align(alignment: AlignmentDirectional.centerStart, child: IconBox(Icons.sms_outlined, size: 52)),
+                Align(alignment: AlignmentDirectional.centerStart, child: IconBox(Icons.sms_outlined, size: 52)),
                 const SizedBox(height: 18),
                 Text(app.t('otpTitle'), style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 4),
                 Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-                  Text('${app.t('otpSub')} ', style: const TextStyle(color: AppColors.muted)),
+                  Text('${app.t('otpSub')} ', style: TextStyle(color: AppColors.muted)),
                   Text(formatPhone(widget.phone),
                       textDirection: TextDirection.ltr,
                       style: const TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800)),
@@ -163,10 +163,10 @@ class _OtpScreenState extends State<OtpScreen> {
                 ],
                 const SizedBox(height: 14),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(app.t('noCode'), style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                  Text(app.t('noCode'), style: TextStyle(fontSize: 13, color: AppColors.muted)),
                   const SizedBox(width: 6),
                   if (_left > 0)
-                    Text(app.t('resendIn', {'s': '$mm:$ss'}), style: const TextStyle(fontSize: 13, color: AppColors.muted))
+                    Text(app.t('resendIn', {'s': '$mm:$ss'}), style: TextStyle(fontSize: 13, color: AppColors.muted))
                   else
                     TextButton(onPressed: _resend, child: Text(app.t('resend'))),
                 ]),
@@ -178,7 +178,7 @@ class _OtpScreenState extends State<OtpScreen> {
             child: ValueListenableBuilder<TextEditingValue>(
               valueListenable: _code,
               builder: (_, v, __) => PrimaryButton(
-                label: app.t('confirm'),
+                label: app.t(_isSignup ? 'createAccount' : 'confirm'),
                 loading: _loading,
                 onPressed: v.text.length == 6 ? _verify : null,
               ),
@@ -188,4 +188,5 @@ class _OtpScreenState extends State<OtpScreen> {
       ),
     );
   }
+
 }

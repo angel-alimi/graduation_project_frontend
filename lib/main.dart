@@ -6,7 +6,7 @@ import 'state/app_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,

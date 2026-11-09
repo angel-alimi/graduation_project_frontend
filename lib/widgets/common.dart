@@ -17,7 +17,7 @@ class BrandRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Image.asset('assets/images/logo_drop.png', height: height),
-      const SizedBox(width: 7),
+      SizedBox(width: 7),
       Wordmark(fontSize: fontSize, spaced: spaced),
     ]);
   }
@@ -41,7 +41,7 @@ class Wordmark extends StatelessWidget {
   }
 }
 
-/// Rounded white card with a hairline border.
+/// Rounded white card on the grey page background (no border).
 class AppCard extends StatelessWidget {
   const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(14), this.color, this.onTap});
   final Widget child;
@@ -51,23 +51,23 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final r = BorderRadius.circular(14);
+    final r = BorderRadius.circular(16);
     return Material(
       color: color ?? AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: r, side: BorderSide(color: color == null ? AppColors.line : Colors.transparent)),
+      shape: RoundedRectangleBorder(borderRadius: r),
       clipBehavior: Clip.antiAlias,
       child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),
     );
   }
 }
 
-/// Coloured square with an icon inside.
+/// Icon in a fixed-size slot. Plain grey outline by default; pass [bg] for a tinted square.
 class IconBox extends StatelessWidget {
-  const IconBox(this.icon, {super.key, this.size = 32, this.bg = AppColors.soft, this.fg = AppColors.red});
+  const IconBox(this.icon, {super.key, this.size = 32, this.bg = Colors.transparent, this.fg});
   final IconData icon;
   final double size;
   final Color bg;
-  final Color fg;
+  final Color? fg;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -75,19 +75,19 @@ class IconBox extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(size * .28)),
         alignment: Alignment.center,
-        child: Icon(icon, size: size * .5, color: fg),
+        child: Icon(icon, size: size * (bg == Colors.transparent ? .66 : .5), color: fg ?? AppColors.muted),
       );
 }
 
 /// Chevron that points "forward" in both RTL and LTR.
 class ForwardChevron extends StatelessWidget {
-  const ForwardChevron({super.key, this.color = const Color(0xFFA3A8B0), this.size = 20});
-  final Color color;
+  const ForwardChevron({super.key, this.color, this.size = 20});
+  final Color? color;
   final double size;
   @override
   Widget build(BuildContext context) => Icon(
         Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-        color: color,
+        color: color ?? AppColors.hint,
         size: size,
       );
 }
@@ -120,7 +120,7 @@ class SquareIconButton extends StatelessWidget {
       color: filled ? AppColors.chip : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(size * .3),
-        side: filled ? BorderSide.none : const BorderSide(color: AppColors.field),
+        side: filled ? BorderSide.none : BorderSide(color: AppColors.field),
       ),
       child: InkWell(
         customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(size * .3)),
@@ -195,9 +195,9 @@ class LangToggle extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: on ? Colors.white : Colors.transparent,
+            color: on ? AppColors.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: on ? const [BoxShadow(color: Color(0x1F1F2430), blurRadius: 3, offset: Offset(0, 1))] : null,
+            boxShadow: on ? [BoxShadow(color: AppColors.shadow, blurRadius: 3, offset: Offset(0, 1))] : null,
           ),
           child: Text(label,
               style: TextStyle(fontFamily: font, fontSize: 12, fontWeight: FontWeight.w800, color: on ? AppColors.ink : AppColors.muted)),
@@ -232,7 +232,7 @@ class LangPill extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.translate_rounded, size: 18, color: AppColors.ink),
+            Icon(Icons.translate_rounded, size: 18, color: AppColors.ink),
             const SizedBox(width: 8),
             Text(app.t('otherLang'),
                 style: TextStyle(fontSize: 13, fontFamily: app.lang == 'ar' ? AppFonts.latin : AppFonts.arabic, color: AppColors.ink)),
@@ -276,7 +276,7 @@ class StepHeader extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: v,
                         minHeight: 3,
-                        backgroundColor: const Color(0xFFE8DEE0),
+                        backgroundColor: AppColors.field,
                         color: AppColors.red,
                       ),
                     ),
@@ -345,7 +345,7 @@ class FieldLabel extends StatelessWidget {
         child: Text.rich(TextSpan(children: [
           TextSpan(text: text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
           if (optional)
-            TextSpan(text: '  ${context.tr('optional')}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+            TextSpan(text: '  ${context.tr('optional')}', style: TextStyle(fontSize: 12, color: AppColors.muted)),
         ])),
       );
 }
@@ -355,8 +355,8 @@ class SectionLabel extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 4, bottom: 2),
-        child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.muted)),
+        padding: const EdgeInsetsDirectional.only(start: 4, top: 6, bottom: 4),
+        child: Text(text, style: TextStyle(fontSize: 12.5, color: AppColors.hint)),
       );
 }
 
@@ -370,7 +370,7 @@ class ErrorText extends StatelessWidget {
             ? const SizedBox(width: double.infinity)
             : Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text(text!, style: const TextStyle(fontSize: 12, color: Color(0xFFB23A0B))),
+                child: Text(text!, style: TextStyle(fontSize: 12, color: AppColors.error)),
               ),
       );
 }
@@ -440,25 +440,7 @@ class BloodTypeGrid extends StatelessWidget {
   }
 }
 
-/// Urgency tag shown on request cards.
-class UrgencyTag extends StatelessWidget {
-  const UrgencyTag(this.urgency, {super.key});
-  final Urgency urgency;
-  @override
-  Widget build(BuildContext context) {
-    final urgent = urgency == Urgency.urgent;
-    return Container(
-      height: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: urgent ? AppColors.amberBg : AppColors.greenBg, borderRadius: BorderRadius.circular(6)),
-      child: Text(context.tr(urgent ? 'urgent' : 'normal'),
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: urgent ? AppColors.amber : AppColors.green)),
-    );
-  }
-}
-
-/// Small red drop + blood type, e.g. "● B+".
+/// Small red drop + blood type in dark text, e.g. "● B+".
 class BloodLabel extends StatelessWidget {
   const BloodLabel(this.type, {super.key, this.size = 14});
   final BloodType type;
@@ -469,7 +451,7 @@ class BloodLabel extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.water_drop_rounded, size: size, color: AppColors.red),
           const SizedBox(width: 3),
-          Text(type.display, style: TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: size, color: AppColors.red)),
+          Text(type.display, style: TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: size, color: AppColors.ink)),
         ]),
       );
 }
@@ -490,7 +472,7 @@ class EmptyState extends StatelessWidget {
           Container(
             width: 120,
             height: 120,
-            decoration: const BoxDecoration(color: AppColors.soft, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.soft, shape: BoxShape.circle),
             alignment: Alignment.bottomCenter,
             clipBehavior: Clip.antiAlias,
             child: Mascot(pose: pose, size: 88),
@@ -498,7 +480,7 @@ class EmptyState extends StatelessWidget {
           const SizedBox(height: 14),
           Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 13, color: AppColors.muted), textAlign: TextAlign.center),
+          Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.muted), textAlign: TextAlign.center),
         ]),
       ),
     );
@@ -515,9 +497,9 @@ class ErrorState extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.wifi_off_rounded, color: AppColors.muted, size: 32),
+            Icon(Icons.wifi_off_rounded, color: AppColors.muted, size: 32),
             const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontSize: 13)),
             const SizedBox(height: 10),
             TextButton(onPressed: onRetry, child: Text(context.tr('retry'))),
           ]),
@@ -542,7 +524,7 @@ Future<T?> showAppSheet<T>(BuildContext context, {required String title, require
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
             Center(
-              child: Container(width: 36, height: 4, decoration: BoxDecoration(color: const Color(0xFFD8CFD1), borderRadius: BorderRadius.circular(2))),
+              child: Container(width: 36, height: 4, decoration: BoxDecoration(color: AppColors.field, borderRadius: BorderRadius.circular(2))),
             ),
             const SizedBox(height: 12),
             Row(children: [
@@ -556,4 +538,90 @@ Future<T?> showAppSheet<T>(BuildContext context, {required String title, require
       ),
     ),
   );
+}
+
+/// White rounded group of rows separated by hairlines (settings-list style).
+class ListGroup extends StatelessWidget {
+  const ListGroup({super.key, required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const Divider(height: 1, indent: 50),
+            children[i],
+          ],
+        ]),
+      );
+}
+
+/// One row inside a [ListGroup]: grey outline icon, label, optional grey value, chevron.
+class ListRow extends StatelessWidget {
+  const ListRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.value,
+    this.valueLatin = false,
+    this.trailing,
+    this.onTap,
+    this.showChevron,
+    this.destructive = false,
+  });
+  final IconData icon;
+  final String label;
+  final String? value;
+  final bool valueLatin;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool? showChevron;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final chevron = showChevron ?? (onTap != null && trailing == null);
+    final fg = destructive ? AppColors.red : AppColors.ink;
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 52),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 12, 8),
+          child: Row(children: [
+            Icon(icon, size: 20, color: destructive ? AppColors.red : AppColors.muted),
+            const SizedBox(width: 14),
+            Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: fg))),
+            if (value != null)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 8),
+                child: Text(value!,
+                    textDirection: valueLatin ? TextDirection.ltr : null,
+                    style: TextStyle(fontSize: 13, color: AppColors.hint, fontFamily: valueLatin ? AppFonts.latin : null)),
+              ),
+            if (trailing != null) trailing!,
+            if (chevron) const ForwardChevron(size: 20),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Page header used by pushed screens: back button and a centred title.
+class PageHeader extends StatelessWidget {
+  const PageHeader(this.title, {super.key, this.action});
+  final String title;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 48,
+        child: Stack(alignment: Alignment.center, children: [
+          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          const Align(alignment: AlignmentDirectional.centerStart, child: BackSquareButton()),
+          if (action != null) Align(alignment: AlignmentDirectional.centerEnd, child: action!),
+        ]),
+      );
 }

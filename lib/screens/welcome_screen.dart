@@ -13,16 +13,16 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     context.app;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
           child: Column(children: [
-            const Row(children: [BrandRow(), Spacer(), LangPill()]),
+            Row(children: [BrandRow(), Spacer(), LangPill()]),
             Expanded(
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 700),
+                duration: Duration(milliseconds: 700),
                 curve: Curves.easeOutCubic,
                 builder: (_, v, child) => Opacity(
                   opacity: v,
@@ -30,11 +30,11 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Image.asset('assets/images/logo_drop.png', height: 128, semanticLabel: 'LifeShare'),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   const Wordmark(fontSize: 34, spaced: true),
                   const SizedBox(height: 14),
                   Text(context.tr('tagline'),
-                      textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, color: AppColors.muted)),
+                      textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: AppColors.muted)),
                 ]),
               ),
             ),

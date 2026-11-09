@@ -21,9 +21,9 @@ class _IntroScreenState extends State<IntroScreen> {
 
   void _next() {
     if (_page == _count - 1) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SignupInfoScreen()));
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => SignupInfoScreen()));
     } else {
-      _pc.nextPage(duration: const Duration(milliseconds: 550), curve: Curves.easeOutCubic);
+      _pc.nextPage(duration: Duration(milliseconds: 550), curve: Curves.easeOutCubic);
     }
   }
 
@@ -39,24 +39,24 @@ class _IntroScreenState extends State<IntroScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Column(children: [
             Row(children: [
-              const BackSquareButton(),
-              const Spacer(),
+              BackSquareButton(),
+              Spacer(),
               AnimatedOpacity(
                 opacity: last ? 0 : 1,
-                duration: const Duration(milliseconds: 200),
+                duration: Duration(milliseconds: 200),
                 child: TextButton(
                   onPressed: last
                       ? null
-                      : () => _pc.animateToPage(_count - 1, duration: const Duration(milliseconds: 600), curve: Curves.easeOutCubic),
+                      : () => _pc.animateToPage(_count - 1, duration: Duration(milliseconds: 600), curve: Curves.easeOutCubic),
                   style: TextButton.styleFrom(foregroundColor: AppColors.muted),
-                  child: Text(context.tr('skip'), style: const TextStyle(fontWeight: FontWeight.w400)),
+                  child: Text(context.tr('skip'), style: TextStyle(fontWeight: FontWeight.w400)),
                 ),
               ),
             ]),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Expanded(
               child: PageView(
                 controller: _pc,
@@ -64,12 +64,12 @@ class _IntroScreenState extends State<IntroScreen> {
                 children: [
                   _Slide(
                     active: _page == 0,
-                    art: const Mascot(pose: MascotPose.hero, size: 156),
+                    art: Mascot(pose: MascotPose.hero, size: 156),
                     a: 'ob1a', b: 'ob1b', c: 'ob1c', body: 'ob1p',
                   ),
                   _Slide(
                     active: _page == 1,
-                    art: const Padding(padding: EdgeInsets.only(top: 12), child: Mascot(pose: MascotPose.phone, size: 150)),
+                    art: Padding(padding: EdgeInsets.only(top: 12), child: Mascot(pose: MascotPose.phone, size: 150)),
                     overlay: PositionedDirectional(
                       top: 22,
                       start: 16,
@@ -83,7 +83,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   ),
                   _Slide(
                     active: _page == 2,
-                    art: const Mascot(pose: MascotPose.wave, size: 150),
+                    art: Mascot(pose: MascotPose.wave, size: 150),
                     overlay: PositionedDirectional(
                       bottom: 22,
                       end: 16,
@@ -109,7 +109,7 @@ class _IntroScreenState extends State<IntroScreen> {
                     width: i == _page ? 22 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: i == _page ? AppColors.red : const Color(0xFFE0D3D6),
+                      color: i == _page ? AppColors.red : AppColors.field,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -148,7 +148,7 @@ class _Slide extends StatelessWidget {
           decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(28)),
           clipBehavior: Clip.antiAlias,
           child: Stack(alignment: Alignment.center, children: [
-            Container(width: 210, height: 210, decoration: const BoxDecoration(color: Color(0x99FFFFFF), shape: BoxShape.circle)),
+            Container(width: 210, height: 210, decoration: BoxDecoration(color: AppColors.surface.withValues(alpha: .6), shape: BoxShape.circle)),
             AnimatedScale(
               scale: active ? 1 : .9,
               duration: const Duration(milliseconds: 600),
@@ -163,7 +163,7 @@ class _Slide extends StatelessWidget {
       Text.rich(
         TextSpan(children: [
           TextSpan(text: context.tr(a)),
-          TextSpan(text: context.tr(b), style: const TextStyle(color: AppColors.red)),
+          TextSpan(text: context.tr(b), style: const TextStyle(fontWeight: FontWeight.w800)),
           TextSpan(text: context.tr(c)),
         ]),
         style: tt.headlineSmall,
@@ -183,16 +183,16 @@ class _MiniCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: const [BoxShadow(color: Color(0x141F2430), blurRadius: 18, offset: Offset(0, 6))],
+          boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 18, offset: Offset(0, 6))],
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           leading,
           const SizedBox(width: 10),
           Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
             Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-            Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+            Text(subtitle, style: TextStyle(fontSize: 11, color: AppColors.muted)),
           ]),
         ]),
       );

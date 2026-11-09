@@ -22,6 +22,9 @@ abstract class LifeShareApi {
   Future<AppUser> me();
   Future<AppUser> updateLastDonation(DateTime date);
 
+  /// The signed-in user's donation record, newest first.
+  Future<List<Donation>> donations();
+
   // Requests
   Future<List<BloodRequest>> feed({Urgency? urgency, String? query});
   Future<List<BloodRequest>> myRequests();

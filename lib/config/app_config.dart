@@ -23,7 +23,7 @@ class AppConfig {
   static const int donationCooldownDays = 56;
 
   /// Minimum age to register as a donor.
-  static const int minimumAge = 17;
+  static const int minimumAge = 18;
 
   /// OTP resend countdown in seconds.
   static const int otpResendSeconds = 45;

@@ -62,7 +62,9 @@ Seed the `cities` and `hospitals` tables from `lib/data/palestine_data.dart`, ke
 ```json
 {
   "id": 12,
-  "requesterName": "سارة ك.",
+  "requesterName": "سارة كمال",
+  "requesterPhone": "568492026",
+  "contactPhones": ["599111222"],
   "hospitalId": 1,
   "cityId": 1,
   "bloodType": "B_POS",
@@ -78,9 +80,17 @@ Seed the `cities` and `hospitals` tables from `lib/data/palestine_data.dart`, ke
 }
 ```
 - `cityId` = the hospital's city (join, not stored on the request).
-- `requesterName` = the requester's name. You can shorten it for privacy (e.g. "سارة ك.").
+- `requesterName` = the requester's full name (e.g. "سارة كمال").
+- `requesterPhone` = the requester's local 9-digit mobile number. Shown to donors through the **Contact** button on matched requests (call / SMS / WhatsApp). Send it only on `/api/requests/matched` and `/api/requests/mine`; return `null` elsewhere so numbers are not public in the feed.
+- `contactPhones` = optional extra numbers the requester added (max 2, local 9 digits). Same visibility rule as `requesterPhone`. Empty list when none.
 - `mine` = true when the signed-in user created the request.
 - `myResponse` = the signed-in user's response status for this request, or `null`.
+
+**Donation**
+```json
+{ "id": 7, "date": "2026-06-21", "hospitalId": 1 }
+```
+- One entry of the user's donation record. `hospitalId` may be `null`.
 
 **EligibilityQuestion**
 ```json
@@ -95,7 +105,7 @@ Seed the `cities` and `hospitals` tables from `lib/data/palestine_data.dart`, ke
   "requestId": 12,
   "bloodType": "B_POS",
   "hospitalId": 1,
-  "personName": "سارة ك.",
+  "personName": "سارة كمال",
   "createdAt": "2026-11-04T16:20:00+02:00",
   "read": false
 }
@@ -134,12 +144,15 @@ The app writes the notification text itself from `type` and the fields, so you d
   "birthDate": "2002-07-05",
   "cityId": 1,
   "bloodType": "B_POS",
-  "lastDonationDate": "2026-10-01"
+  "lastDonationDate": "2026-10-01",
+  "termsVersion": "2026-11-09",
+  "termsAcceptedAt": "2026-11-09T10:15:00Z"
 }
 ```
 → `200 { "token": "<JWT>", "user": User }`
 `lastDonationDate` is optional; `null` means the user has never donated.
-Validate: age ≥ 17, name ≥ 3 characters, city exists, code valid, `lastDonationDate` not in the future and not before `birthDate`.
+`termsVersion` and `termsAcceptedAt` are required. The sign-up form (step 1) ends with two required ticks, unchecked by default: "I have read and agree to the Terms and Conditions" (opens the full Terms; it can only be ticked by scrolling to the end and tapping "I agree") and "I agree that LifeShare may use my blood type, donation history, and health answers to match me with blood requests". "Next" stays disabled until both are ticked. Store both on the user (e.g. `terms_version`, `terms_accepted_at`) to prove consent, and reject the signup if they are missing. When the Terms change, the app bumps `kTermsVersion` in `lib/screens/terms_screen.dart`; ask users on an older version to accept again. The Terms text the app shows is in `assets/terms/terms_ar.md` and `terms_en.md`.
+Validate: age ≥ 18, name ≥ 3 characters, city exists, code valid, `lastDonationDate` not in the future and not before `birthDate`.
 
 **3. Log in** — `POST /api/auth/login`
 ```json
@@ -153,6 +166,9 @@ Validate: age ≥ 17, name ≥ 3 characters, city exists, code valid, `lastDonat
 |---|---|---|---|
 | GET | `/api/users/me` | – | `User` |
 | PATCH | `/api/users/me` | `{ "lastDonationDate": "2026-10-01" }` | `User` |
+| GET | `/api/users/me/donations` | – | `Donation[]`, newest first |
+
+The app no longer lets users record donations by hand. A `Donation` row is created by the backend when a donor has **accepted** a request and the **requester confirms** the donation took place; at the same time set the donor's `lastDonationDate` to that date (this drives the 56-day cooldown and badges).
 
 Later you can also accept `{ "fcmToken": "..." }` on the same PATCH for push notifications.
 
@@ -173,12 +189,13 @@ Later you can also accept `{ "fcmToken": "..." }` on the same PATCH for push not
   "bloodType": "B_POS",
   "unitsNeeded": 2,
   "hospitalId": 1,
-  "urgency": "URGENT",
+  "urgency": "NORMAL",
   "neededAt": "2026-11-05T07:00:00Z",
-  "note": "قبل عملية غداً صباحاً."
+  "note": "قبل عملية غداً صباحاً.",
+  "contactPhones": ["599111222"]
 }
 ```
-`patientName` and `note` can be `null`. `unitsNeeded` is 1–10. `neededAt` is required, sent in UTC, and must be in the future.
+`patientName` and `note` can be `null`. `contactPhones` is optional (0–2 valid local numbers starting with 59 or 56); the signed-in user's own number is always the main contact and must not be repeated here. The app no longer offers an urgency choice and always sends `NORMAL`. `unitsNeeded` is 1–10. `neededAt` is required, sent in UTC, and must be in the future.
 Store and return `patientName` and `note` exactly as written. Never translate them.
 
 ### Responding to a request (token)
@@ -231,3 +248,9 @@ The same table is in the app: `lib/models/enums.dart` → `BloodType.canDonateTo
 - Security: permit `/api/auth/**`, `/api/cities`, `/api/hospitals`; everything else authenticated with a JWT filter. Return 401 (not a redirect) when the token is missing.
 - If you also run the app in Chrome (`flutter run -d chrome`), allow CORS for `http://localhost:*`.
 - A `@RestControllerAdvice` that turns exceptions into `{ "message": "..." }` keeps the app's error messages readable.
+
+---
+
+## Records kept for enforcing the Terms
+
+Section 8 of the Terms tells users we keep activity records to check reports of misuse. For that, the backend should keep, per account: the phone number, `terms_version` / `terms_accepted_at`, every request created / cancelled / edited (with timestamps), every response (accepted / ineligible) and donation confirmation, and the request IP address and user agent for sign-up, login, and request creation. Keep these records for accounts that were reported or banned even after the account is deleted.

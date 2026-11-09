@@ -50,7 +50,7 @@ class LifeShareBottomBar extends StatelessWidget {
               child: Container(
                 width: _circle,
                 height: _circle,
-                decoration: const BoxDecoration(color: AppColors.red, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.red, shape: BoxShape.circle),
               ),
             ),
             Positioned.fill(
@@ -101,7 +101,7 @@ class LifeShareBottomBar extends StatelessWidget {
                 fontSize: 10,
                 height: 1.2,
                 fontWeight: on ? FontWeight.w800 : FontWeight.w400,
-                color: on ? AppColors.red : AppColors.muted2,
+                color: on ? AppColors.ink : AppColors.muted2,
                 fontFamily: DefaultTextStyle.of(context).style.fontFamily,
               ),
               child: Text(item.label, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),

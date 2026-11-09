@@ -21,13 +21,20 @@ class AppState extends ChangeNotifier {
   static const _kToken = 'token';
   static const _kLang = 'lang';
   static const _kNotif = 'notifications';
+  static const _kTheme = 'theme';
 
   String lang = 'ar';
   String? token;
   AppUser? user;
   bool notificationsOn = true;
+
+  /// 'system', 'light' or 'dark'.
+  String themeMode = 'light';
   List<City> cities = const [];
   List<Hospital> hospitals = const [];
+
+  /// The user's donation record (newest first). Null until loaded.
+  List<Donation>? donations;
 
   bool get isRtl => lang == 'ar';
   bool get isLoggedIn => token != null && user != null;
@@ -45,6 +52,7 @@ class AppState extends ChangeNotifier {
     final s = AppState._(api, client, prefs);
     s.lang = prefs.getString(_kLang) ?? 'ar';
     s.notificationsOn = prefs.getBool(_kNotif) ?? true;
+    s.themeMode = prefs.getString(_kTheme) ?? 'light';
     s._client?.language = s.lang;
     s.token = prefs.getString(_kToken);
     s.api.setToken(s.token);
@@ -135,15 +143,29 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Loads (or reloads) the donation record.
+  Future<void> loadDonations() async {
+    donations = await api.donations();
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     token = null;
     user = null;
+    donations = null;
     api.setToken(null);
     await _prefs.remove(_kToken);
     notifyListeners();
   }
 
   // ---------- settings ----------
+  Future<void> setThemeMode(String mode) async {
+    if (mode == themeMode) return;
+    themeMode = mode;
+    await _prefs.setString(_kTheme, mode);
+    notifyListeners();
+  }
+
   Future<void> setNotifications(bool on) async {
     notificationsOn = on;
     await _prefs.setBool(_kNotif, on);

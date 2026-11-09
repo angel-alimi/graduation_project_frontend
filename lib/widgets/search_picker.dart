@@ -61,7 +61,7 @@ class SearchPickerField<T> extends StatelessWidget {
         decoration: InputDecoration(
           errorText: errorText,
           errorMaxLines: 2,
-          suffixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
+          suffixIcon: Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
         ),
         child: Text(
           label ?? hint,
@@ -113,7 +113,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Center(
-                child: Container(width: 36, height: 4, decoration: BoxDecoration(color: const Color(0xFFD8CFD1), borderRadius: BorderRadius.circular(2))),
+                child: Container(width: 36, height: 4, decoration: BoxDecoration(color: AppColors.field, borderRadius: BorderRadius.circular(2))),
               ),
               const SizedBox(height: 12),
               Row(children: [
@@ -126,7 +126,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: widget.searchHint,
-                  prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
                 ),
                 onChanged: (v) => setState(() => _query = v),
               ),
@@ -134,7 +134,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
           ),
           Expanded(
             child: results.isEmpty
-                ? Center(child: Text(context.tr('noResults'), style: const TextStyle(color: AppColors.muted)))
+                ? Center(child: Text(context.tr('noResults'), style: TextStyle(color: AppColors.muted)))
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
                     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -146,7 +146,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
                       return ListTile(
                         title: Text(o.label, style: TextStyle(fontSize: 14, fontWeight: selected ? FontWeight.w800 : FontWeight.w400)),
                         subtitle: o.subtitle == null ? null : Text(o.subtitle!, style: Theme.of(context).textTheme.bodySmall),
-                        trailing: selected ? const Icon(Icons.check_rounded, color: AppColors.red) : null,
+                        trailing: selected ? Icon(Icons.check_rounded, color: AppColors.ink) : null,
                         onTap: () => Navigator.of(context).pop(o.value),
                       );
                     },

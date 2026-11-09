@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import '../state/app_state.dart';
 import 'home_shell.dart';
 import 'welcome_screen.dart';
@@ -14,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..forward();
+      AnimationController(vsync: this, duration: Duration(milliseconds: 900))..forward();
 
   @override
   void initState() {
@@ -26,13 +27,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final app = context.appRead;
     final results = await Future.wait([
       app.bootstrap(),
-      Future.delayed(const Duration(milliseconds: 1800)),
+      Future.delayed(Duration(milliseconds: 1800)),
     ]);
     if (!mounted) return;
     final loggedIn = results[0] as bool;
     Navigator.of(context).pushReplacement(PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 450),
-      pageBuilder: (_, __, ___) => loggedIn ? const HomeShell() : const WelcomeScreen(),
+      transitionDuration: Duration(milliseconds: 450),
+      pageBuilder: (_, __, ___) => loggedIn ? HomeShell() : WelcomeScreen(),
       transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
     ));
   }
@@ -47,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final fade = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // logo artwork is made for white, in both themes
       body: Center(
         child: FadeTransition(
           opacity: fade,

@@ -48,9 +48,9 @@ class PhoneField extends StatelessWidget {
           prefixIcon: Container(
             width: 64,
             margin: const EdgeInsets.only(right: 10),
-            decoration: const BoxDecoration(border: Border(right: BorderSide(color: AppColors.line))),
+            decoration: BoxDecoration(border: Border(right: BorderSide(color: AppColors.line))),
             alignment: Alignment.center,
-            child: const Text('+970', style: TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.ink)),
+            child: Text('+970', style: TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.ink)),
           ),
           prefixIconConstraints: const BoxConstraints(minWidth: 64, minHeight: 46),
         ),
@@ -137,7 +137,7 @@ class _OtpInputState extends State<OtpInput> {
   Widget _box(int i, String text) {
     final filled = i < text.length;
     final active = _focus.hasFocus && (i == text.length || (i == widget.length - 1 && text.length == widget.length));
-    final color = widget.hasError ? const Color(0xFFC2410C) : (active ? AppColors.red : AppColors.field);
+    final color = widget.hasError ? AppColors.errorBorder : (active ? AppColors.red : AppColors.field);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       height: 50,
@@ -146,10 +146,10 @@ class _OtpInputState extends State<OtpInput> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color, width: active ? 1.5 : 1),
-        boxShadow: active ? const [BoxShadow(color: Color(0x1AA71930), blurRadius: 0, spreadRadius: 3)] : null,
+        boxShadow: active ? [BoxShadow(color: AppColors.red.withValues(alpha: .12), blurRadius: 0, spreadRadius: 3)] : null,
       ),
       child: Text(filled ? text[i] : '',
-          style: const TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: 19, color: AppColors.ink)),
+          style: TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: 19, color: AppColors.ink)),
     );
   }
 }

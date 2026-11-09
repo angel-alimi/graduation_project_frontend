@@ -76,9 +76,9 @@ class _SignupPhoneScreenState extends State<SignupPhoneScreen> {
                 PhoneField(controller: _phone, errorText: _error, onSubmitted: (_) => _send()),
                 const SizedBox(height: 12),
                 Row(children: [
-                  const Icon(Icons.lock_outline_rounded, size: 14, color: AppColors.muted),
+                  Icon(Icons.lock_outline_rounded, size: 14, color: AppColors.muted),
                   const SizedBox(width: 6),
-                  Text(app.t('private'), style: Theme.of(context).textTheme.bodySmall),
+                  Expanded(child: Text(app.t('private'), style: Theme.of(context).textTheme.bodySmall)),
                 ]),
               ],
             ),
@@ -92,3 +92,4 @@ class _SignupPhoneScreenState extends State<SignupPhoneScreen> {
     );
   }
 }
+

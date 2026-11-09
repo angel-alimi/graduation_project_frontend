@@ -1,28 +1,43 @@
 import 'package:flutter/material.dart';
 
-/// LifeShare colours (same tokens as the web prototype).
+/// LifeShare colours. Light and dark palettes share the same names, so
+/// widgets just read `AppColors.ink`, `AppColors.surface`, etc.
+/// [setDark] switches palette; the app root then rebuilds every widget.
 class AppColors {
   AppColors._();
-  static const bg = Color(0xFFF9F7F6);
-  static const surface = Color(0xFFFFFFFF);
-  static const ink = Color(0xFF1F2430);
-  static const muted = Color(0xFF5F6672);
-  static const muted2 = Color(0xFF6B7280);
-  static const hint = Color(0xFF9096A0);
-  static const red = Color(0xFFA71930);
-  static const redDark = Color(0xFF8B1428);
-  static const soft = Color(0xFFF7E8EB);
-  static const line = Color(0xFFECE6E6);
-  static const field = Color(0xFFE3DBDC);
-  static const navBg = Color(0xFFF3ECED);
-  static const chip = Color(0xFFF2EFEF);
-  static const amberBg = Color(0xFFFDEEDF);
-  static const amber = Color(0xFF8A3B0A);
-  static const greenBg = Color(0xFFEAF4EC);
-  static const green = Color(0xFF2F6B3A);
-  static const indigoBg = Color(0xFFEEF0F6);
-  static const indigo = Color(0xFF3F4A7A);
-  static const scrim = Color(0x5C1F2430);
+
+  static bool _dark = false;
+  static bool get isDark => _dark;
+  static void setDark(bool v) => _dark = v;
+
+  static Color _p(int light, int dark) => Color(_dark ? dark : light);
+
+  static Color get bg => _p(0xFFF6F6F8, 0xFF18191A);
+  static Color get surface => _p(0xFFFFFFFF, 0xFF242526);
+  static Color get ink => _p(0xFF1F2430, 0xFFE4E6EB);
+  static Color get muted => _p(0xFF5F6672, 0xFFB0B3B8);
+  static Color get muted2 => _p(0xFF6B7280, 0xFFB0B3B8);
+  static Color get hint => _p(0xFF9096A0, 0xFF8A8D91);
+
+  /// Brand red, the same in both themes.
+  static Color get red => _p(0xFFA71930, 0xFFA71930);
+  static Color get redDark => _p(0xFF8B1428, 0xFF8B1428);
+
+  static Color get soft => _p(0xFFF1F1F4, 0xFF3A3B3C); // neutral tint (avatars, empty states)
+  static Color get line => _p(0xFFEDEDF0, 0xFF3A3B3C);
+  static Color get field => _p(0xFFE2E2E7, 0xFF3E4042);
+  static Color get navBg => _p(0xFFFFFFFF, 0xFF242526);
+  static Color get chip => _p(0xFFF1F1F4, 0xFF3A3B3C);
+  static Color get amberBg => _p(0xFFFDEEDF, 0xFF33240F);
+  static Color get amber => _p(0xFF8A3B0A, 0xFFF2AE6B);
+  static Color get greenBg => _p(0xFFEAF4EC, 0xFF14291A);
+  static Color get green => _p(0xFF2F6B3A, 0xFF7FCB8E);
+  static Color get indigoBg => _p(0xFFEEF0F6, 0xFF1D2033);
+  static Color get indigo => _p(0xFF3F4A7A, 0xFFA9B2E6);
+  static Color get scrim => _p(0x5C1F2430, 0xB3000000);
+  static Color get error => _p(0xFFB23A0B, 0xFFF08A5D);
+  static Color get errorBorder => _p(0xFFC2410C, 0xFFE0703F);
+  static Color get shadow => _p(0x1F1F2430, 0x40000000);
 }
 
 class AppFonts {
@@ -34,7 +49,8 @@ class AppFonts {
 /// Latin text style (numbers, blood types, the wordmark).
 const TextStyle latin = TextStyle(fontFamily: AppFonts.latin);
 
-ThemeData buildTheme(String lang) {
+ThemeData buildTheme(String lang, {bool dark = false}) {
+  AppColors.setDark(dark);
   final primaryFont = lang == 'ar' ? AppFonts.arabic : AppFonts.latin;
   final fallback = [lang == 'ar' ? AppFonts.latin : AppFonts.arabic];
   final radius10 = BorderRadius.circular(10);
@@ -47,12 +63,20 @@ ThemeData buildTheme(String lang) {
     fontFamily: primaryFont,
     fontFamilyFallback: fallback,
     scaffoldBackgroundColor: AppColors.bg,
+    brightness: dark ? Brightness.dark : Brightness.light,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.red,
+      brightness: dark ? Brightness.dark : Brightness.light,
       primary: AppColors.red,
       surface: AppColors.bg,
       onSurface: AppColors.ink,
+      onPrimary: Colors.white,
+      surfaceContainerHigh: AppColors.surface,
+      surfaceContainerHighest: AppColors.chip,
+      outline: AppColors.field,
     ),
+    canvasColor: AppColors.bg,
+    cardColor: AppColors.surface,
     splashFactory: InkRipple.splashFactory,
   );
 
@@ -69,7 +93,7 @@ ThemeData buildTheme(String lang) {
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.red,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0x66A71930),
+        disabledBackgroundColor: AppColors.red.withValues(alpha: .4),
         disabledForegroundColor: Colors.white,
         minimumSize: const Size.fromHeight(48),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -82,7 +106,7 @@ ThemeData buildTheme(String lang) {
         foregroundColor: AppColors.ink,
         backgroundColor: AppColors.surface,
         minimumSize: const Size.fromHeight(48),
-        side: const BorderSide(color: AppColors.field),
+        side: BorderSide(color: AppColors.field),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, fontFamily: primaryFont, fontFamilyFallback: fallback),
       ),
@@ -98,21 +122,30 @@ ThemeData buildTheme(String lang) {
       fillColor: AppColors.surface,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      hintStyle: const TextStyle(color: AppColors.hint, fontSize: 14),
+      hintStyle: TextStyle(color: AppColors.hint, fontSize: 14),
       border: border(AppColors.field),
       enabledBorder: border(AppColors.field),
       focusedBorder: border(AppColors.red, 1.4),
-      errorBorder: border(const Color(0xFFC2410C)),
-      focusedErrorBorder: border(const Color(0xFFC2410C), 1.4),
-      errorStyle: const TextStyle(fontSize: 12, color: Color(0xFFB23A0B)),
+      errorBorder: border(AppColors.errorBorder),
+      focusedErrorBorder: border(AppColors.errorBorder, 1.4),
+      errorStyle: TextStyle(fontSize: 12, color: AppColors.error),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.ink,
-      contentTextStyle: TextStyle(fontSize: 13, color: Colors.white, fontFamily: primaryFont, fontFamilyFallback: fallback),
+      backgroundColor: dark ? AppColors.chip : AppColors.ink,
+      contentTextStyle: TextStyle(fontSize: 13, color: dark ? AppColors.ink : Colors.white, fontFamily: primaryFont, fontFamilyFallback: fallback),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
-    dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1, space: 1),
+    dividerTheme: DividerThemeData(color: AppColors.line, thickness: 1, space: 1),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? Colors.white : AppColors.muted2),
+      trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? AppColors.red : AppColors.chip),
+      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+    ),
+    datePickerTheme: DatePickerThemeData(backgroundColor: AppColors.surface, surfaceTintColor: Colors.transparent),
+    timePickerTheme: TimePickerThemeData(backgroundColor: AppColors.surface),
+    dialogTheme: DialogThemeData(backgroundColor: AppColors.surface, surfaceTintColor: Colors.transparent),
+    progressIndicatorTheme: ProgressIndicatorThemeData(color: AppColors.red),
     pageTransitionsTheme: const PageTransitionsTheme(builders: {
       TargetPlatform.android: CupertinoPageTransitionsBuilder(),
       TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),

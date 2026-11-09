@@ -9,11 +9,10 @@ import 'tabs/dashboard_tab.dart';
 import 'tabs/feed_tab.dart';
 import 'tabs/profile_tab.dart';
 import 'tabs/requests_tab.dart';
-import 'tabs/settings_tab.dart';
 
 /// Tab indexes, in the order they appear in the bottom bar.
 class Tabs {
-  static const requests = 0, feed = 1, home = 2, profile = 3, settings = 4;
+  static const requests = 0, feed = 1, home = 2, profile = 3;
 }
 
 /// Lets any tab switch tabs (e.g. "Donate blood" on the dashboard opens Matched requests).
@@ -73,31 +72,18 @@ class _HomeShellState extends State<HomeShell> {
       child: ListenableBuilder(
         listenable: _shell,
         builder: (context, _) {
-          const tabs = [RequestsTab(), FeedTab(), DashboardTab(), ProfileTab(), SettingsTab()];
+          const tabs = [RequestsTab(), FeedTab(), DashboardTab(), ProfileTab()];
           return Scaffold(
             body: SafeArea(
               bottom: false,
               child: Column(children: [
                 // Header: logo, language, notifications
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
-                  decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.line))),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, 10),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.line))),
                   child: Row(children: [
-                    const BrandRow(),
-                    const Spacer(),
-                    _HeaderButton(
-                      onTap: app.toggleLang,
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Icon(Icons.language_rounded, size: 16, color: AppColors.ink),
-                        const SizedBox(width: 6),
-                        Text(app.lang == 'ar' ? 'EN' : 'ع',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: app.lang == 'ar' ? AppFonts.latin : AppFonts.arabic)),
-                      ]),
-                    ),
-                    const SizedBox(width: 8),
+                    BrandRow(),
+                    Spacer(),
                     SquareIconButton(
                       icon: Icons.notifications_none_rounded,
                       size: 36,
@@ -110,13 +96,13 @@ class _HomeShellState extends State<HomeShell> {
                 ),
                 Expanded(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 320),
+                    duration: Duration(milliseconds: 320),
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     transitionBuilder: (child, a) => FadeTransition(
                       opacity: a,
                       child: SlideTransition(
-                        position: Tween(begin: const Offset(0, .015), end: Offset.zero).animate(a),
+                        position: Tween(begin: Offset(0, .015), end: Offset.zero).animate(a),
                         child: child,
                       ),
                     ),
@@ -133,7 +119,6 @@ class _HomeShellState extends State<HomeShell> {
                 BottomBarItem(Icons.home_outlined, app.t('tFeed')),
                 BottomBarItem(Icons.grid_view_rounded, app.t('tHome')),
                 BottomBarItem(Icons.person_outline_rounded, app.t('tProfile')),
-                BottomBarItem(Icons.tune_rounded, app.t('tSettings')),
               ],
             ),
           );
@@ -141,21 +126,4 @@ class _HomeShellState extends State<HomeShell> {
       ),
     );
   }
-}
-
-class _HeaderButton extends StatelessWidget {
-  const _HeaderButton({required this.child, required this.onTap});
-  final Widget child;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: AppColors.chip,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          child: Container(height: 36, padding: const EdgeInsets.symmetric(horizontal: 10), alignment: Alignment.center, child: child),
-        ),
-      );
 }

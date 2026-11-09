@@ -10,7 +10,7 @@ import '../../widgets/mascot.dart';
 import '../../widgets/request_card.dart';
 import '../sheets/request_detail_sheet.dart';
 
-/// Public feed of open blood requests, with search and an "Urgent" filter.
+/// Public feed of open blood requests, with search.
 class FeedTab extends StatefulWidget {
   const FeedTab({super.key});
 
@@ -21,7 +21,6 @@ class FeedTab extends StatefulWidget {
 class _FeedTabState extends State<FeedTab> {
   final _search = TextEditingController();
   Timer? _debounce;
-  Urgency? _filter;
   late Future<List<BloodRequest>> _future;
 
   @override
@@ -31,7 +30,7 @@ class _FeedTabState extends State<FeedTab> {
   }
 
   Future<List<BloodRequest>> _fetch() =>
-      context.appRead.api.feed(urgency: _filter, query: _search.text.trim());
+      context.appRead.api.feed(query: _search.text.trim());
 
   void _load() => setState(() => _future = _fetch());
 
@@ -62,17 +61,11 @@ class _FeedTabState extends State<FeedTab> {
           style: const TextStyle(fontSize: 13),
           decoration: InputDecoration(
             hintText: app.t('searchHint'),
-            hintStyle: const TextStyle(fontSize: 13, color: AppColors.hint),
-            prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.muted2),
+            hintStyle: TextStyle(fontSize: 13, color: AppColors.hint),
+            prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppColors.muted2),
             prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 42),
           ),
         ),
-        const SizedBox(height: 12),
-        Row(children: [
-          _FilterChip(label: app.t('all'), selected: _filter == null, onTap: () { _filter = null; _load(); }),
-          const SizedBox(width: 8),
-          _FilterChip(label: app.t('urgent'), selected: _filter == Urgency.urgent, onTap: () { _filter = Urgency.urgent; _load(); }),
-        ]),
         const SizedBox(height: 12),
         Expanded(
           child: FutureBuilder<List<BloodRequest>>(
@@ -97,7 +90,6 @@ class _FeedTabState extends State<FeedTab> {
                     final r = list[i];
                     return RequestCard(
                       request: r,
-                      onTap: () => showRequestDetailSheet(context, r).then((_) => _load()),
                       action: SoftButton(
                         label: app.t('details'),
                         onPressed: () => showRequestDetailSheet(context, r).then((_) => _load()),
@@ -112,29 +104,4 @@ class _FeedTabState extends State<FeedTab> {
       ]),
     );
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? AppColors.ink : AppColors.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: selected ? AppColors.ink : AppColors.field),
-          ),
-          child: Text(label,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: selected ? Colors.white : AppColors.muted)),
-        ),
-      );
 }

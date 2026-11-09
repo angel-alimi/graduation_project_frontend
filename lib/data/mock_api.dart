@@ -34,7 +34,9 @@ class MockApi implements LifeShareApi {
   late final List<BloodRequest> _requests = [
     BloodRequest(
         id: 1,
-        requesterName: 'نور أ.',
+        requesterName: 'نور أبو عيشة',
+        requesterPhone: '591234567',
+        contactPhones: const ['599111222'],
         hospitalId: 1,
         cityId: 1,
         bloodType: BloodType.oPos,
@@ -46,7 +48,8 @@ class MockApi implements LifeShareApi {
         createdAt: DateTime.now().subtract(const Duration(minutes: 18))),
     BloodRequest(
         id: 2,
-        requesterName: 'سارة ك.',
+        requesterName: 'سارة كمال',
+        requesterPhone: '568492026',
         hospitalId: 1,
         cityId: 1,
         bloodType: BloodType.bPos,
@@ -59,7 +62,8 @@ class MockApi implements LifeShareApi {
         createdAt: DateTime.now().subtract(const Duration(minutes: 5))),
     BloodRequest(
         id: 3,
-        requesterName: 'أحمد ر.',
+        requesterName: 'أحمد الرفاعي',
+        requesterPhone: '562345678',
         hospitalId: 2,
         cityId: 1,
         bloodType: BloodType.aPos,
@@ -71,7 +75,8 @@ class MockApi implements LifeShareApi {
         createdAt: DateTime.now().subtract(const Duration(hours: 3))),
     BloodRequest(
         id: 4,
-        requesterName: 'ليان ش.',
+        requesterName: 'ليان الشريف',
+        requesterPhone: '597654321',
         hospitalId: 3,
         cityId: 2,
         bloodType: BloodType.bNeg,
@@ -83,7 +88,8 @@ class MockApi implements LifeShareApi {
         createdAt: DateTime.now().subtract(const Duration(hours: 9))),
     BloodRequest(
         id: 5,
-        requesterName: 'خالد م.',
+        requesterName: 'خالد منصور',
+        requesterPhone: '568765432',
         hospitalId: 2,
         cityId: 1,
         bloodType: BloodType.abPos,
@@ -93,6 +99,12 @@ class MockApi implements LifeShareApi {
         status: RequestStatus.open,
         neededAt: DateTime.now().add(const Duration(hours: 75)),
         createdAt: DateTime.now().subtract(const Duration(days: 1))),
+  ];
+
+  /// Sample donation record for the demo user.
+  late List<Donation> _donations = [
+    Donation(id: 2, date: DateTime.now().subtract(const Duration(days: 140)), hospitalId: 1),
+    Donation(id: 1, date: DateTime.now().subtract(const Duration(days: 330)), hospitalId: 2),
   ];
 
   AppUser _requireUser() {
@@ -119,6 +131,7 @@ class MockApi implements LifeShareApi {
         birthDate: DateTime(2002, 7, 5),
         cityId: 1,
         bloodType: BloodType.bPos,
+        lastDonationDate: _donations.isEmpty ? null : _donations.first.date,
       );
     }
   }
@@ -160,6 +173,7 @@ class MockApi implements LifeShareApi {
       bloodType: data.bloodType,
       lastDonationDate: data.lastDonationDate,
     );
+    _donations = [if (data.lastDonationDate != null) Donation(id: 1, date: data.lastDonationDate!)];
     return AuthResult(token: 'mock-token', user: _user!);
   }
 
@@ -175,6 +189,7 @@ class MockApi implements LifeShareApi {
       birthDate: DateTime(2002, 7, 5),
       cityId: 1,
       bloodType: BloodType.bPos,
+      lastDonationDate: _donations.isEmpty ? null : _donations.first.date,
     );
     return AuthResult(token: 'mock-token', user: _user!);
   }
@@ -189,7 +204,20 @@ class MockApi implements LifeShareApi {
   Future<AppUser> updateLastDonation(DateTime date) async {
     await _wait();
     _user = _requireUser().copyWith(lastDonationDate: date);
+    final day = DateTime(date.year, date.month, date.day);
+    if (!_donations.any((d) => d.date.year == day.year && d.date.month == day.month && d.date.day == day.day)) {
+      _donations
+        ..add(Donation(id: _donations.length + 1, date: day))
+        ..sort((a, b) => b.date.compareTo(a.date));
+    }
     return _withCounts(_user!);
+  }
+
+  @override
+  Future<List<Donation>> donations() async {
+    await _wait();
+    _requireUser();
+    return List.of(_donations);
   }
 
   @override
@@ -234,6 +262,8 @@ class MockApi implements LifeShareApi {
     final r = BloodRequest(
       id: _nextId++,
       requesterName: u.fullName,
+      requesterPhone: u.phone,
+      contactPhones: request.contactPhones,
       hospitalId: h.id,
       cityId: h.cityId,
       bloodType: request.bloodType,

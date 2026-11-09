@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(app.t('noAccount'), style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+              Text(app.t('noAccount'), style: TextStyle(fontSize: 13, color: AppColors.muted)),
               TextButton(
                 onPressed: () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const SignupInfoScreen())),
                 child: Text(app.t('createAccount')),
