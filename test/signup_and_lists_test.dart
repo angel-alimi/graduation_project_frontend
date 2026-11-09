@@ -56,6 +56,7 @@ void main() {
     test('neededAt is sent in UTC and read back as the same moment in local time', () {
       final at = DateTime(2026, 11, 5, 14, 30);
       final json = NewRequest(
+        patientName: 'مريم',
         bloodType: BloodType.oPos,
         unitsNeeded: 1,
         hospitalId: 1,

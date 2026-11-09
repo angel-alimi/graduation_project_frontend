@@ -6,7 +6,7 @@ import '../../models/badges.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
-import '../badges_screen.dart';
+import '../../widgets/level_badge.dart';
 import '../donation_history_screen.dart';
 import '../home_shell.dart';
 import '../sheets/new_request_sheet.dart';
@@ -34,7 +34,6 @@ class _DashboardTabState extends State<DashboardTab> {
     if (user == null) return const SizedBox.shrink();
 
     final donations = app.donations ?? const <Donation>[];
-    final earned = kBadges.where((b) => b.earned(user, donations)).length;
 
     return RefreshIndicator(
       color: AppColors.red,
@@ -55,6 +54,8 @@ class _DashboardTabState extends State<DashboardTab> {
                   Text(app.cityName(user.cityId), style: TextStyle(fontSize: 12, color: AppColors.hint)),
                 ]),
               ),
+              LevelTrophy(donations: donations.length),
+              const SizedBox(width: 8),
               Container(
                 height: 32,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -103,8 +104,6 @@ class _DashboardTabState extends State<DashboardTab> {
                 _Stat(value: '${donations.length}', label: app.t('statDonations')),
                 const VerticalDivider(width: 1),
                 _Stat(value: '${livesHelped(donations)}', label: app.t('statLives')),
-                const VerticalDivider(width: 1),
-                _Stat(value: '$earned', label: app.t('statBadges')),
               ]),
             ),
           ),
@@ -121,29 +120,6 @@ class _DashboardTabState extends State<DashboardTab> {
               onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DonationHistoryScreen())),
             ),
           ]),
-          const SizedBox(height: 16),
-
-          // Rewards
-          SectionLabel(app.t('rewards')),
-          AppCard(
-            padding: EdgeInsets.zero,
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BadgesScreen())),
-            child: Column(children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
-                child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                  for (final b in kBadges) BadgeIcon(badge: b, earned: b.earned(user, donations)),
-                ]),
-              ),
-              const Divider(height: 1),
-              ListRow(
-                icon: Icons.emoji_events_outlined,
-                label: app.t('earnedOf', {'n': earned, 't': kBadges.length}),
-                value: app.t('viewAll'),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BadgesScreen())),
-              ),
-            ]),
-          ),
         ],
       ),
     );
@@ -240,27 +216,4 @@ class _ActionCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Round badge icon: dark when earned, faded when not yet.
-class BadgeIcon extends StatelessWidget {
-  const BadgeIcon({super.key, required this.badge, required this.earned, this.size = 46});
-  final BadgeDef badge;
-  final bool earned;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-        message: context.tr('badge_${badge.key}'),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: earned ? AppColors.chip : AppColors.surface,
-            border: Border.all(color: earned ? AppColors.chip : AppColors.field, width: 1.2),
-          ),
-          child: Icon(badge.icon, size: size * .48, color: earned ? AppColors.ink : AppColors.field),
-        ),
-      );
 }

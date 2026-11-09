@@ -93,6 +93,16 @@ class RemoteApi implements LifeShareApi {
     return ResponseStatus.fromApi(res['status'] as String);
   }
 
+  @override
+  Future<List<Responder>> responders(int requestId) async =>
+      _list(await client.get('/api/requests/$requestId/responses'), Responder.fromJson);
+
+  @override
+  Future<Responder> confirmDonation(int requestId, int responseId) async => Responder.fromJson(
+        await client.post('/api/requests/$requestId/responses/$responseId/confirm')
+            as Map<String, dynamic>,
+      );
+
   // ---------- notifications ----------
   @override
   Future<List<AppNotification>> notifications() async =>

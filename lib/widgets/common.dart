@@ -43,18 +43,24 @@ class Wordmark extends StatelessWidget {
 
 /// Rounded white card on the grey page background (no border).
 class AppCard extends StatelessWidget {
-  const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(14), this.color, this.onTap});
+  const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(14), this.color, this.onTap, this.outlined = false});
   final Widget child;
   final EdgeInsetsGeometry padding;
   final Color? color;
   final VoidCallback? onTap;
+
+  /// Adds a thin hairline border around the card.
+  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(16);
     return Material(
       color: color ?? AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: r),
+      shape: RoundedRectangleBorder(
+        borderRadius: r,
+        side: outlined ? BorderSide(color: AppColors.line) : BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),
     );
@@ -310,6 +316,10 @@ class ScreenTitle extends StatelessWidget {
     ]);
   }
 }
+
+/// Wraps Latin text (e.g. "B+") so it keeps its own order inside an Arabic sentence
+/// instead of showing as "+B".
+String bidiIsolate(String s) => '${String.fromCharCode(0x2066)}$s${String.fromCharCode(0x2069)}';
 
 /// The direction text written by a user should read in, whatever the app language is.
 TextDirection userTextDirection(String text) =>

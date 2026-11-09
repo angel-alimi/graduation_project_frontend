@@ -85,6 +85,14 @@ Seed the `cities` and `hospitals` tables from `lib/data/palestine_data.dart`, ke
 - `contactPhones` = optional extra numbers the requester added (max 2, local 9 digits). Same visibility rule as `requesterPhone`. Empty list when none.
 - `mine` = true when the signed-in user created the request.
 - `myResponse` = the signed-in user's response status for this request, or `null`.
+- `respondersCount` / `confirmedCount` = only on `/api/requests/mine`: responses with status ACCEPTED or COMPLETED, and those COMPLETED. `0` elsewhere.
+
+**Responder** (a donor who accepted one of the user's requests)
+```json
+{ "id": 41, "donorName": "محمد العلي", "donorPhone": "599876543", "bloodType": "O_NEG", "cityId": 1, "respondedAt": "2026-11-04T16:25:00+02:00", "status": "ACCEPTED" }
+```
+- `id` = the response id. `status` is `ACCEPTED` until the requester confirms the donation, then `COMPLETED`.
+- `donorPhone` is shown only to the owner of the request, so they can call / message / WhatsApp the donor.
 
 **Donation**
 ```json
@@ -195,7 +203,7 @@ Later you can also accept `{ "fcmToken": "..." }` on the same PATCH for push not
   "contactPhones": ["599111222"]
 }
 ```
-`patientName` and `note` can be `null`. `contactPhones` is optional (0–2 valid local numbers starting with 59 or 56); the signed-in user's own number is always the main contact and must not be repeated here. The app no longer offers an urgency choice and always sends `NORMAL`. `unitsNeeded` is 1–10. `neededAt` is required, sent in UTC, and must be in the future.
+`patientName` is required (non-empty). `note` can be `null`. `contactPhones` is optional (0–2 valid local numbers starting with 59 or 56); the signed-in user's own number is always the main contact and must not be repeated here. The app no longer offers an urgency choice and always sends `NORMAL`. `unitsNeeded` is 1–10. `neededAt` is required, sent in UTC, and must be in the future.
 Store and return `patientName` and `note` exactly as written. Never translate them.
 
 ### Responding to a request (token)
@@ -215,6 +223,18 @@ The backend decides the status:
 - otherwise → `ACCEPTED`, and notify the requester.
 
 Return `409` if the user already responded, or if the request is the user's own or not `OPEN`.
+
+### Responders to my request (token, owner only)
+
+| Method | Path | Response |
+|---|---|---|
+| GET | `/api/requests/{id}/responses` | `Responder[]`: responses with status ACCEPTED or COMPLETED, newest first. |
+| POST | `/api/requests/{id}/responses/{responseId}/confirm` | The updated `Responder` (status `COMPLETED`). |
+
+Return `403` if the request is not the user's. Confirming:
+- sets the response to `COMPLETED` and creates a `Donation` for the donor (date = today, `hospitalId` = the request's hospital) and sets the donor's `lastDonationDate`;
+- when COMPLETED responses reach `unitsNeeded`, sets the request to `FULFILLED`;
+- returns `409` if the response is already `COMPLETED` or not `ACCEPTED`.
 
 ### Notifications (token)
 

@@ -35,7 +35,7 @@ class _NewRequestFormState extends State<_NewRequestForm> {
   final List<TextEditingController> _extraPhones = [];
   final List<String?> _ePhones = [];
   static const _maxExtraPhones = 2;
-  String? _error, _eHospital, _eNeeded;
+  String? _error, _ePatient, _eHospital, _eNeeded;
 
   /// How far ahead a request can be scheduled.
   static const _maxDaysAhead = 90;
@@ -124,6 +124,7 @@ class _NewRequestFormState extends State<_NewRequestForm> {
     final app = context.appRead;
     final neededAt = _neededAt;
     setState(() {
+      _ePatient = _patient.text.trim().isEmpty ? app.t('ePatient') : null;
       _eHospital = _hospitalId == null ? app.t('eHospital') : null;
       _eNeeded = neededAt == null ? app.t('eNeededAt') : _pastError(app);
     });
@@ -133,7 +134,7 @@ class _NewRequestFormState extends State<_NewRequestForm> {
       _ePhones[i] = v.isEmpty || isValidPhone(v) ? null : app.t('ePhone');
     }
     setState(() {});
-    if (_eHospital != null || _eNeeded != null || _ePhones.any((e) => e != null)) return;
+    if (_ePatient != null || _eHospital != null || _eNeeded != null || _ePhones.any((e) => e != null)) return;
     final confirmed = await _confirmRealRequest(context);
     if (confirmed != true || !mounted) return;
     setState(() { _loading = true; _error = null; });
@@ -166,8 +167,13 @@ class _NewRequestFormState extends State<_NewRequestForm> {
     Widget stepBtn(IconData icon, VoidCallback? onTap) => SquareIconButton(icon: icon, size: 40, onPressed: onTap);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      FieldLabel(app.t('patientName'), optional: true),
-      TextField(controller: _patient),
+      FieldLabel(app.t('patientName')),
+      TextField(
+        controller: _patient,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(errorText: _ePatient),
+        onChanged: (_) { if (_ePatient != null) setState(() => _ePatient = null); },
+      ),
       const SizedBox(height: 14),
       FieldLabel(app.t('neededType')),
       BloodTypeGrid(value: _type, onChanged: (b) => setState(() => _type = b)),

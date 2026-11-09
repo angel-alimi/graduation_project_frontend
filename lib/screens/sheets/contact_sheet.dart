@@ -11,12 +11,38 @@ import '../../widgets/inputs.dart';
 /// call, SMS or WhatsApp. Styled like a phone's contact card.
 Future<void> showContactSheet(BuildContext context, BloodRequest request) {
   final app = context.appRead;
-  return showAppSheet<void>(context, title: app.t('contactTitle'), builder: (_) => _ContactBody(request));
+  return showAppSheet<void>(
+    context,
+    title: app.t('contactTitle'),
+    builder: (_) => _ContactBody(
+      name: request.requesterName,
+      phones: request.allPhones,
+      messageKey: 'smsBody',
+    ),
+  );
+}
+
+/// The same contact card, used by a requester to reach a donor who accepted their request.
+Future<void> showDonorContactSheet(BuildContext context, Responder donor) {
+  final app = context.appRead;
+  return showAppSheet<void>(
+    context,
+    title: app.t('contactDonor'),
+    builder: (_) => _ContactBody(
+      name: donor.donorName,
+      phones: [if ((donor.donorPhone ?? '').isNotEmpty) donor.donorPhone!],
+      messageKey: 'smsBodyDonor',
+    ),
+  );
 }
 
 class _ContactBody extends StatefulWidget {
-  const _ContactBody(this.r);
-  final BloodRequest r;
+  const _ContactBody({required this.name, required this.phones, required this.messageKey});
+  final String name;
+  final List<String> phones;
+
+  /// Strings key of the prefilled SMS / WhatsApp text (takes `{name}`).
+  final String messageKey;
 
   @override
   State<_ContactBody> createState() => _ContactBodyState();
@@ -25,8 +51,6 @@ class _ContactBody extends StatefulWidget {
 class _ContactBodyState extends State<_ContactBody> {
   /// Which of the requester's numbers the actions use.
   int _selected = 0;
-
-  BloodRequest get r => widget.r;
 
   /// International form without "+", e.g. 970591234567.
   String _intl(String local) => '970${normalizePhone(local)}';
@@ -43,12 +67,12 @@ class _ContactBodyState extends State<_ContactBody> {
   @override
   Widget build(BuildContext context) {
     final app = context.app;
-    final phones = r.allPhones;
+    final phones = widget.phones;
     final hasPhone = phones.isNotEmpty;
     final phone = hasPhone ? phones[_selected.clamp(0, phones.length - 1)] : '';
 
     final header = Column(children: [
-      Text(r.requesterName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+      Text(widget.name, textDirection: userTextDirection(widget.name), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
       if (phones.length == 1) ...[
         const SizedBox(height: 2),
         Text(formatPhone(phone),
@@ -79,7 +103,7 @@ class _ContactBodyState extends State<_ContactBody> {
       ]);
     }
 
-    final message = app.t('smsBody', {'name': r.requesterName});
+    final message = app.t(widget.messageKey, {'name': widget.name});
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       header,
       const SizedBox(height: 18),

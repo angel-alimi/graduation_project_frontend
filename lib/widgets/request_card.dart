@@ -18,55 +18,78 @@ class RequestCard extends StatelessWidget {
     final app = context.app;
     final r = request;
     final title = r.mine ? (r.patientName ?? app.user?.fullName ?? r.requesterName) : r.requesterName;
+    final meta = Theme.of(context).textTheme.bodySmall!.copyWith(fontSize: 12);
     return AppCard(
       onTap: onTap,
+      outlined: true,
+      padding: EdgeInsets.zero,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, textDirection: userTextDirection(title), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              Text('${app.cityName(r.cityId)} · ${app.timeAgo(r.createdAt)}',
-                  style: TextStyle(fontSize: 12, color: AppColors.hint)),
-            ]),
-          ),
-          ShareIconButton(request: r),
-        ]),
-        const SizedBox(height: 10),
-        Text(app.t('needs', {'units': r.unitsNeeded, 'bt': r.bloodType.display}),
-            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500)),
-        if ((r.note ?? '').isNotEmpty) ...[
-          const SizedBox(height: 2),
-          UserText(r.note!, style: const TextStyle(fontSize: 13.5, height: 1.6)),
-        ],
-        const SizedBox(height: 6),
-        Row(children: [
-          Icon(Icons.local_hospital_outlined, size: 14, color: AppColors.muted),
-          const SizedBox(width: 6),
-          Expanded(child: Text(app.hospitalName(r.hospitalId), style: Theme.of(context).textTheme.bodySmall)),
-        ]),
-        if (r.neededAt != null) ...[
-          const SizedBox(height: 4),
-          Row(children: [
-            Icon(Icons.schedule_rounded, size: 14, color: AppColors.muted),
-            const SizedBox(width: 6),
-            Expanded(child: Text(formatDateTime(r.neededAt!, app.lang), style: Theme.of(context).textTheme.bodySmall)),
-          ]),
-        ],
-        const SizedBox(height: 10),
-        const Divider(),
-        const SizedBox(height: 10),
-        Row(children: [
-          BloodLabel(r.bloodType),
-          const SizedBox(width: 8),
-          // Shrinks the buttons slightly on very narrow screens instead of overflowing.
-          if (action != null)
+        // Heading: who, where and when posted, the blood type, share.
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 6, 10),
+          child: Row(children: [
             Expanded(
-              child: Align(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textDirection: userTextDirection(title),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                Text('${app.cityName(r.cityId)} · ${app.timeAgo(r.createdAt)}',
+                    style: TextStyle(fontSize: 11.5, color: AppColors.hint)),
+              ]),
+            ),
+            Container(
+              height: 26,
+              padding: const EdgeInsets.symmetric(horizontal: 9),
+              decoration: BoxDecoration(color: AppColors.chip, borderRadius: BorderRadius.circular(13)),
+              child: Center(child: BloodLabel(r.bloodType, size: 12.5)),
+            ),
+            ShareIconButton(request: r),
+          ]),
+        ),
+        const Divider(height: 1),
+        // Body
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(app.t('needs', {'units': r.unitsNeeded, 'bt': bidiIsolate(r.bloodType.display)}),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            if ((r.note ?? '').isNotEmpty) ...[
+              const SizedBox(height: 2),
+              SizedBox(
+                width: double.infinity,
+                child: Text(r.note!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textDirection: userTextDirection(r.note!),
+                    style: TextStyle(fontSize: 13, height: 1.55, color: AppColors.muted)),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.local_hospital_outlined, size: 14, color: AppColors.hint),
+              const SizedBox(width: 6),
+              Expanded(child: Text(app.hospitalName(r.hospitalId), maxLines: 1, overflow: TextOverflow.ellipsis, style: meta)),
+            ]),
+            if (r.neededAt != null) ...[
+              const SizedBox(height: 3),
+              Row(children: [
+                Icon(Icons.schedule_rounded, size: 14, color: AppColors.hint),
+                const SizedBox(width: 6),
+                Expanded(child: Text(formatDateTime(r.neededAt!, app.lang), style: meta)),
+              ]),
+            ],
+            if (action != null) ...[
+              const SizedBox(height: 10),
+              // Shrinks the buttons slightly on very narrow screens instead of overflowing.
+              Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: action!),
               ),
-            ),
-        ]),
+            ],
+          ]),
+        ),
       ]),
     );
   }

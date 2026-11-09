@@ -101,6 +101,23 @@ class MockApi implements LifeShareApi {
         createdAt: DateTime.now().subtract(const Duration(days: 1))),
   ];
 
+  /// Donors who accepted the user's own requests, by request id.
+  final Map<int, List<Responder>> _responders = {};
+
+  /// Sample donors that "accept" each request the user posts, so the responders screen has data.
+  static const _sampleDonors = [
+    ('محمد العلي', '599876543', 1),
+    ('رنا حداد', '569123456', 2),
+  ];
+
+  BloodRequest _withResponders(BloodRequest r) {
+    final list = _responders[r.id] ?? const <Responder>[];
+    return r.copyWith(
+      respondersCount: list.length,
+      confirmedCount: list.where((x) => x.confirmed).length,
+    );
+  }
+
   /// Sample donation record for the demo user.
   late List<Donation> _donations = [
     Donation(id: 2, date: DateTime.now().subtract(const Duration(days: 140)), hospitalId: 1),
@@ -241,7 +258,7 @@ class MockApi implements LifeShareApi {
   @override
   Future<List<BloodRequest>> myRequests() async {
     await _wait();
-    return _requests.where((r) => r.mine && r.status != RequestStatus.cancelled).toList()
+    return _requests.where((r) => r.mine && r.status != RequestStatus.cancelled).map(_withResponders).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
@@ -277,7 +294,21 @@ class MockApi implements LifeShareApi {
       mine: true,
     );
     _requests.insert(0, r);
-    return r;
+    // Donors whose type can give to this request: the same type, then O−.
+    final types = {request.bloodType, BloodType.oNeg}.toList();
+    _responders[r.id] = [
+      for (var i = 0; i < _sampleDonors.length; i++)
+        Responder(
+          id: _nextId++,
+          donorName: _sampleDonors[i].$1,
+          donorPhone: _sampleDonors[i].$2,
+          bloodType: types[i % types.length],
+          cityId: _sampleDonors[i].$3,
+          respondedAt: DateTime.now().subtract(Duration(minutes: 2 + i * 7)),
+          status: ResponseStatus.accepted,
+        ),
+    ];
+    return _withResponders(r);
   }
 
   @override
@@ -301,6 +332,28 @@ class MockApi implements LifeShareApi {
     final i = _requests.indexWhere((r) => r.id == requestId);
     if (i >= 0) _requests[i] = _requests[i].copyWith(myResponse: status);
     return status;
+  }
+
+  @override
+  Future<List<Responder>> responders(int requestId) async {
+    await _wait();
+    return List.of(_responders[requestId] ?? const <Responder>[])
+      ..sort((a, b) => b.respondedAt.compareTo(a.respondedAt));
+  }
+
+  @override
+  Future<Responder> confirmDonation(int requestId, int responseId) async {
+    await _wait();
+    final list = _responders[requestId];
+    final i = list?.indexWhere((x) => x.id == responseId) ?? -1;
+    if (list == null || i < 0) throw const ApiException('server', statusCode: 404);
+    list[i] = list[i].copyWith(status: ResponseStatus.completed);
+    // Enough confirmed donations: the request is fulfilled.
+    final ri = _requests.indexWhere((r) => r.id == requestId);
+    if (ri >= 0 && list.where((x) => x.confirmed).length >= _requests[ri].unitsNeeded) {
+      _requests[ri] = _requests[ri].copyWith(status: RequestStatus.fulfilled);
+    }
+    return list[i];
   }
 
   @override

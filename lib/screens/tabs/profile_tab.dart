@@ -5,6 +5,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
 import '../../widgets/inputs.dart';
+import '../../widgets/level_badge.dart';
 import '../terms_screen.dart';
 import '../welcome_screen.dart';
 
@@ -94,7 +95,10 @@ class _ProfileTabState extends State<ProfileTab> {
   void initState() {
     super.initState();
     // Refresh counts (requests / responses) from the backend.
-    context.appRead.refreshUser().catchError((_) {});
+    final app = context.appRead;
+    app.refreshUser().catchError((_) {});
+    // The level badge next to the name needs the donation count.
+    if (app.donations == null) app.loadDonations().catchError((_) {});
   }
 
   @override
@@ -123,6 +127,8 @@ class _ProfileTabState extends State<ProfileTab> {
                     style: TextStyle(fontFamily: AppFonts.latin, fontSize: 12.5, color: AppColors.hint)),
               ]),
             ),
+            LevelTrophy(donations: app.donations?.length ?? 0),
+            const SizedBox(width: 4),
             ForwardChevron(),
           ]),
         ),

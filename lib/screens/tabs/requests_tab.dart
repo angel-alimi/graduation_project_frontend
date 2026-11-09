@@ -9,6 +9,7 @@ import '../../widgets/request_card.dart';
 import '../home_shell.dart';
 import '../sheets/contact_sheet.dart';
 import '../sheets/request_detail_sheet.dart';
+import '../sheets/responders_sheet.dart';
 
 class RequestsTab extends StatefulWidget {
   const RequestsTab({super.key});
@@ -96,13 +97,26 @@ class _RequestsTabState extends State<RequestsTab> {
                     }
                     final r = list[_segment == 1 ? i - 1 : i];
                     if (_segment == 0) {
+                      final open = r.status == RequestStatus.open;
+                      void openResponders() => showRespondersSheet(context, r).then((_) => _load());
                       return RequestCard(
                         request: r,
-                        action: SoftButton(
-                          label: app.t('cancelRequest'),
-                          destructive: true,
-                          onPressed: () => _cancel(r),
-                        ),
+                        onTap: openResponders,
+                        action: Row(mainAxisSize: MainAxisSize.min, children: [
+                          open
+                              ? SoftButton(
+                                  label: app.t('cancelRequest'),
+                                  destructive: true,
+                                  onPressed: () => _cancel(r),
+                                )
+                              : SoftButton(label: app.t('fulfilled'), done: true),
+                          const SizedBox(width: 8),
+                          AcceptButton(
+                            label: app.t('respondersN', {'n': r.respondersCount}),
+                            icon: Icons.people_outline_rounded,
+                            onPressed: openResponders,
+                          ),
+                        ]),
                       );
                     }
                     final done = r.myResponse != null;

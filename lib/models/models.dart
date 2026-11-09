@@ -181,6 +181,12 @@ class BloodRequest {
   /// The signed-in user's response to this request, if any.
   final ResponseStatus? myResponse;
 
+  /// On the user's own requests: donors who accepted (ACCEPTED or COMPLETED). 0 elsewhere.
+  final int respondersCount;
+
+  /// On the user's own requests: donations the requester has confirmed. 0 elsewhere.
+  final int confirmedCount;
+
   const BloodRequest({
     required this.id,
     required this.requesterName,
@@ -198,6 +204,8 @@ class BloodRequest {
     this.neededAt,
     this.mine = false,
     this.myResponse,
+    this.respondersCount = 0,
+    this.confirmedCount = 0,
   });
 
   /// Every number to reach the requester on: theirs first, then the extras.
@@ -206,7 +214,12 @@ class BloodRequest {
         ...contactPhones.where((p) => p.isNotEmpty),
       }.toList();
 
-  BloodRequest copyWith({RequestStatus? status, ResponseStatus? myResponse}) =>
+  BloodRequest copyWith({
+    RequestStatus? status,
+    ResponseStatus? myResponse,
+    int? respondersCount,
+    int? confirmedCount,
+  }) =>
       BloodRequest(
         id: id,
         requesterName: requesterName,
@@ -224,6 +237,8 @@ class BloodRequest {
         neededAt: neededAt,
         mine: mine,
         myResponse: myResponse ?? this.myResponse,
+        respondersCount: respondersCount ?? this.respondersCount,
+        confirmedCount: confirmedCount ?? this.confirmedCount,
       );
 
   factory BloodRequest.fromJson(Map<String, dynamic> j) => BloodRequest(
@@ -245,12 +260,63 @@ class BloodRequest {
         myResponse: j['myResponse'] == null
             ? null
             : ResponseStatus.fromApi(j['myResponse'] as String),
+        respondersCount: (j['respondersCount'] ?? 0) as int,
+        confirmedCount: (j['confirmedCount'] ?? 0) as int,
+      );
+}
+
+/// A donor who accepted one of the signed-in user's requests
+/// (a `request_responses` row with status ACCEPTED or COMPLETED).
+class Responder {
+  /// The response id, used to confirm the donation.
+  final int id;
+  final String donorName;
+
+  /// Donor's local 9-digit mobile number, shared only with the requester.
+  final String? donorPhone;
+  final BloodType bloodType;
+  final int cityId;
+  final DateTime respondedAt;
+
+  /// ACCEPTED until the requester confirms the donation, then COMPLETED.
+  final ResponseStatus status;
+
+  const Responder({
+    required this.id,
+    required this.donorName,
+    required this.bloodType,
+    required this.cityId,
+    required this.respondedAt,
+    required this.status,
+    this.donorPhone,
+  });
+
+  bool get confirmed => status == ResponseStatus.completed;
+
+  Responder copyWith({ResponseStatus? status}) => Responder(
+        id: id,
+        donorName: donorName,
+        donorPhone: donorPhone,
+        bloodType: bloodType,
+        cityId: cityId,
+        respondedAt: respondedAt,
+        status: status ?? this.status,
+      );
+
+  factory Responder.fromJson(Map<String, dynamic> j) => Responder(
+        id: j['id'] as int,
+        donorName: j['donorName'] as String,
+        donorPhone: j['donorPhone'] as String?,
+        bloodType: BloodType.fromApi(j['bloodType'] as String),
+        cityId: j['cityId'] as int,
+        respondedAt: DateTime.parse(j['respondedAt'] as String),
+        status: ResponseStatus.fromApi(j['status'] as String),
       );
 }
 
 /// Body of POST /api/requests.
 class NewRequest {
-  final String? patientName;
+  final String patientName;
   final BloodType bloodType;
   final int unitsNeeded;
   final int hospitalId;
@@ -262,19 +328,19 @@ class NewRequest {
   final List<String> contactPhones;
 
   const NewRequest({
+    required this.patientName,
     required this.bloodType,
     required this.unitsNeeded,
     required this.hospitalId,
     required this.urgency,
     required this.neededAt,
-    this.patientName,
     this.note,
     this.contactPhones = const [],
   });
 
   Map<String, dynamic> toJson() => {
         'contactPhones': contactPhones,
-        'patientName': (patientName ?? '').trim().isEmpty ? null : patientName!.trim(),
+        'patientName': patientName.trim(),
         'bloodType': bloodType.apiName,
         'unitsNeeded': unitsNeeded,
         'hospitalId': hospitalId,

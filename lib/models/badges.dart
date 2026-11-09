@@ -2,30 +2,37 @@ import 'package:flutter/material.dart';
 
 import 'models.dart';
 
-/// A reward the user earns by donating or responding to requests.
-class BadgeDef {
-  final String key; // strings: badge_<key>, badge_<key>_d
+/// The donor's level. It only goes up with confirmed donations.
+/// Strings: `badge_<key>` (name) and `badge_<key>_d` (what it takes).
+class DonorLevel {
+  final String key;
   final IconData icon;
-  final int goal;
 
-  /// How far the user is towards [goal].
-  final int Function(AppUser user, List<Donation> donations) progress;
+  /// Confirmed donations needed to reach this level.
+  final int minDonations;
 
-  const BadgeDef(this.key, this.icon, this.goal, this.progress);
-
-  bool earned(AppUser u, List<Donation> d) => progress(u, d) >= goal;
+  const DonorLevel(this.key, this.icon, this.minDonations);
 }
 
-int _donated(AppUser _, List<Donation> d) => d.length;
-
-/// All badges, in the order they are usually earned.
-final List<BadgeDef> kBadges = [
-  const BadgeDef('first', Icons.water_drop_outlined, 1, _donated),
-  BadgeDef('responder', Icons.volunteer_activism_outlined, 1, (u, _) => u.responsesCount),
-  const BadgeDef('three', Icons.favorite_border_rounded, 3, _donated),
-  const BadgeDef('five', Icons.workspace_premium_outlined, 5, _donated),
-  const BadgeDef('ten', Icons.military_tech_outlined, 10, _donated),
+/// All levels, lowest first.
+const List<DonorLevel> kLevels = [
+  DonorLevel('new', Icons.water_drop_outlined, 0),
+  DonorLevel('first', Icons.water_drop_rounded, 1),
+  DonorLevel('three', Icons.favorite_rounded, 3),
+  DonorLevel('five', Icons.workspace_premium_rounded, 5),
+  DonorLevel('ten', Icons.military_tech_rounded, 10),
 ];
+
+/// The level for [donations] confirmed donations.
+DonorLevel levelFor(int donations) => kLevels.lastWhere((l) => donations >= l.minDonations);
+
+/// The next level to reach, or null at the top.
+DonorLevel? nextLevel(int donations) {
+  for (final l in kLevels) {
+    if (l.minDonations > donations) return l;
+  }
+  return null;
+}
 
 /// One donation can help up to three people.
 int livesHelped(List<Donation> d) => d.length * 3;

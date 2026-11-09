@@ -70,7 +70,7 @@ class _DetailBodyState extends State<_DetailBody> {
         ShareIconButton(request: r),
       ]),
       const SizedBox(height: 10),
-      Text(app.t('needs', {'units': r.unitsNeeded, 'bt': r.bloodType.display}),
+      Text(app.t('needs', {'units': r.unitsNeeded, 'bt': bidiIsolate(r.bloodType.display)}),
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
       if ((r.note ?? '').isNotEmpty) ...[
         const SizedBox(height: 4),

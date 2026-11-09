@@ -38,6 +38,13 @@ abstract class LifeShareApi {
   /// Sends the eligibility answers. The backend decides ACCEPTED or INELIGIBLE.
   Future<ResponseStatus> respond(int requestId, Map<int, bool> answers);
 
+  // Responders to the user's own request
+  /// Donors who accepted [requestId] (ACCEPTED or COMPLETED), newest first. Owner only.
+  Future<List<Responder>> responders(int requestId);
+
+  /// The requester confirms that a responder donated. Returns the updated responder (COMPLETED).
+  Future<Responder> confirmDonation(int requestId, int responseId);
+
   // Notifications
   Future<List<AppNotification>> notifications();
   Future<void> markAllNotificationsRead();
