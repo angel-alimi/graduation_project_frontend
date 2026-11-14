@@ -41,6 +41,7 @@ class MockApi implements LifeShareApi {
         cityId: 1,
         bloodType: BloodType.oPos,
         unitsNeeded: 3,
+        urgency: Urgency.urgent,
         note: 'مريض في العناية المركزة.',
         status: RequestStatus.open,
         neededAt: DateTime.now().add(const Duration(hours: 3)),
@@ -53,6 +54,7 @@ class MockApi implements LifeShareApi {
         cityId: 1,
         bloodType: BloodType.bPos,
         unitsNeeded: 2,
+        urgency: Urgency.urgent,
         patientName: 'مريم خليل',
         note: 'قبل عملية غداً صباحاً.',
         status: RequestStatus.open,
@@ -66,6 +68,7 @@ class MockApi implements LifeShareApi {
         cityId: 1,
         bloodType: BloodType.aPos,
         unitsNeeded: 2,
+        urgency: Urgency.normal,
         note: 'لإجراء عملية جراحية.',
         status: RequestStatus.open,
         neededAt: DateTime.now().add(const Duration(hours: 28)),
@@ -90,6 +93,7 @@ class MockApi implements LifeShareApi {
         cityId: 1,
         bloodType: BloodType.abPos,
         unitsNeeded: 1,
+
         note: 'طفل يحتاج نقل دم دوري.',
         status: RequestStatus.open,
         neededAt: DateTime.now().add(const Duration(hours: 75)),
@@ -233,11 +237,12 @@ class MockApi implements LifeShareApi {
   }
 
   @override
-  Future<List<BloodRequest>> feed({String? query}) async {
+  Future<List<BloodRequest>> feed({Urgency? urgency, String? query}) async {
     await _wait();
     final q = (query ?? '').trim().toLowerCase();
     return _requests.where((r) {
       if (r.status != RequestStatus.open) return false;
+      if (urgency != null && r.urgency != urgency) return false;
       if (q.isEmpty) return true;
       final h = kHospitals.firstWhere((x) => x.id == r.hospitalId);
       final c = kCities.firstWhere((x) => x.id == r.cityId);
@@ -266,16 +271,6 @@ class MockApi implements LifeShareApi {
   }
 
   @override
-  Future<List<BloodRequest>> acceptedRequests() async {
-    await _wait();
-    _requireUser();
-    return _requests
-        .where((r) => r.myResponse == ResponseStatus.accepted || r.myResponse == ResponseStatus.completed)
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  }
-
-  @override
   Future<BloodRequest> createRequest(NewRequest request) async {
     await _wait();
     final u = _requireUser();
@@ -289,6 +284,7 @@ class MockApi implements LifeShareApi {
       cityId: h.cityId,
       bloodType: request.bloodType,
       unitsNeeded: request.unitsNeeded,
+      urgency: request.urgency,
       neededAt: request.neededAt,
       patientName: request.patientName,
       note: request.note,
