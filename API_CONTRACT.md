@@ -21,7 +21,6 @@ Build the backend to match, then run the app with `--dart-define=USE_MOCK=false`
 ```java
 enum BloodType       { A_POS, A_NEG, B_POS, B_NEG, AB_POS, AB_NEG, O_POS, O_NEG }
 enum Gender          { FEMALE, MALE }
-enum Urgency         { NORMAL, URGENT }
 enum RequestStatus   { OPEN, FULFILLED, CANCELLED }
 enum ResponseStatus  { ACCEPTED, DECLINED, INELIGIBLE, CANCELLED, COMPLETED }
 enum OtpPurpose      { SIGNUP, LOGIN }
@@ -69,7 +68,6 @@ Seed the `cities` and `hospitals` tables from `lib/data/palestine_data.dart`, ke
   "cityId": 1,
   "bloodType": "B_POS",
   "unitsNeeded": 2,
-  "urgency": "URGENT",
   "patientName": "مريم خليل",
   "note": "قبل عملية غداً صباحاً.",
   "neededAt": "2026-11-05T07:00:00Z",
@@ -81,7 +79,7 @@ Seed the `cities` and `hospitals` tables from `lib/data/palestine_data.dart`, ke
 ```
 - `cityId` = the hospital's city (join, not stored on the request).
 - `requesterName` = the requester's full name (e.g. "سارة كمال").
-- `requesterPhone` = the requester's local 9-digit mobile number. Shown to donors through the **Contact** button on matched requests (call / SMS / WhatsApp). Send it only on `/api/requests/matched` and `/api/requests/mine`; return `null` elsewhere so numbers are not public in the feed.
+- `requesterPhone` = the request's main contact number (local 9 digits): the `contactPhone` sent when the request was created, which is the requester's own number unless they changed it. Shown to donors through the **Contact** button on matched requests (call / SMS / WhatsApp). Send it only on `/api/requests/matched` and `/api/requests/mine`; return `null` elsewhere so numbers are not public in the feed.
 - `contactPhones` = optional extra numbers the requester added (max 2, local 9 digits). Same visibility rule as `requesterPhone`. Empty list when none.
 - `mine` = true when the signed-in user created the request.
 - `myResponse` = the signed-in user's response status for this request, or `null`.
@@ -184,9 +182,10 @@ Later you can also accept `{ "fcmToken": "..." }` on the same PATCH for push not
 
 | Method | Path | Notes | Response |
 |---|---|---|---|
-| GET | `/api/requests?urgency=URGENT&q=رام` | Public feed. Only `OPEN` requests, newest first. Both query params are optional. `q` searches requester name, note, hospital and city names. | `BloodRequest[]` |
+| GET | `/api/requests?q=رام` | Public feed. Only `OPEN` requests, newest first. `q` is optional. `q` searches requester name, note, hospital and city names. | `BloodRequest[]` |
 | GET | `/api/requests/mine` | The user's requests, not cancelled, newest first. | `BloodRequest[]` |
 | GET | `/api/requests/matched` | `OPEN` requests from **other** users whose blood type the user **can donate to** (see table below). Same city first is a good default. | `BloodRequest[]` |
+| GET | `/api/requests/accepted` | Requests the signed-in user responded to with `ACCEPTED` or `COMPLETED`, **any request status** (open, fulfilled or cancelled), newest response first. Include `requesterPhone` / `contactPhones` (the donor already accepted) and `myResponse`. | `BloodRequest[]` |
 | POST | `/api/requests` | Body below. The requester is the signed-in user. | `BloodRequest` (201) |
 | PATCH | `/api/requests/{id}/cancel` | Only the owner. Sets status `CANCELLED`. | `204` |
 
@@ -197,13 +196,13 @@ Later you can also accept `{ "fcmToken": "..." }` on the same PATCH for push not
   "bloodType": "B_POS",
   "unitsNeeded": 2,
   "hospitalId": 1,
-  "urgency": "NORMAL",
   "neededAt": "2026-11-05T07:00:00Z",
   "note": "قبل عملية غداً صباحاً.",
+  "contactPhone": "591234567",
   "contactPhones": ["599111222"]
 }
 ```
-`patientName` is required (non-empty). `note` can be `null`. `contactPhones` is optional (0–2 valid local numbers starting with 59 or 56); the signed-in user's own number is always the main contact and must not be repeated here. The app no longer offers an urgency choice and always sends `NORMAL`. `unitsNeeded` is 1–10. `neededAt` is required, sent in UTC, and must be in the future.
+`patientName` is required (non-empty). `note` can be `null`. `contactPhone` is required: the main contact number for this request (a valid local 9-digit number starting with 59 or 56). The app fills it with the user's own number, but the user may change it (e.g. to a family member's number). Return it as the request's `requesterPhone`. `contactPhones` is optional (0–2 more valid local numbers) and must not repeat `contactPhone`. Requests have no urgency field. `unitsNeeded` is 1–10. `neededAt` is required, sent in UTC, and must be in the future.
 Store and return `patientName` and `note` exactly as written. Never translate them.
 
 ### Responding to a request (token)

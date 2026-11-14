@@ -23,6 +23,11 @@ class AppColors {
   static Color get red => _p(0xFFA71930, 0xFFA71930);
   static Color get redDark => _p(0xFF8B1428, 0xFF8B1428);
 
+  /// Brand red for text, icons and thin lines drawn on the page or a card.
+  /// Lighter in dark mode so it stays readable on dark surfaces; filled
+  /// buttons keep [red] with white text.
+  static Color get redText => _p(0xFFA71930, 0xFFF0637A);
+
   static Color get soft => _p(0xFFF1F1F4, 0xFF3A3B3C); // neutral tint (avatars, empty states)
   static Color get line => _p(0xFFEDEDF0, 0xFF3A3B3C);
   static Color get field => _p(0xFFE2E2E7, 0xFF3E4042);
@@ -42,8 +47,15 @@ class AppColors {
 
 class AppFonts {
   AppFonts._();
-  static const arabic = 'OoredooArabic';
-  static const latin = 'Ooredoo';
+  /// One family for the whole app. IBM Plex Sans Arabic has both the Arabic
+  /// and the Latin letters, so mixed lines (names, numbers, blood types) share
+  /// the same size and baseline.
+  static const text = 'IBMPlexSansArabic';
+  static const arabic = text;
+  static const latin = text;
+
+  /// Only for the "LifeShare" wordmark.
+  static const brand = 'Ooredoo';
 }
 
 /// Latin text style (numbers, blood types, the wordmark).
@@ -51,8 +63,8 @@ const TextStyle latin = TextStyle(fontFamily: AppFonts.latin);
 
 ThemeData buildTheme(String lang, {bool dark = false}) {
   AppColors.setDark(dark);
-  final primaryFont = lang == 'ar' ? AppFonts.arabic : AppFonts.latin;
-  final fallback = [lang == 'ar' ? AppFonts.latin : AppFonts.arabic];
+  const primaryFont = AppFonts.text;
+  const fallback = <String>[];
   final radius10 = BorderRadius.circular(10);
 
   OutlineInputBorder border(Color c, [double w = 1]) =>
@@ -113,7 +125,7 @@ ThemeData buildTheme(String lang, {bool dark = false}) {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.red,
+        foregroundColor: AppColors.redText,
         textStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, fontFamily: primaryFont, fontFamilyFallback: fallback),
       ),
     ),
@@ -125,7 +137,7 @@ ThemeData buildTheme(String lang, {bool dark = false}) {
       hintStyle: TextStyle(color: AppColors.hint, fontSize: 14),
       border: border(AppColors.field),
       enabledBorder: border(AppColors.field),
-      focusedBorder: border(AppColors.red, 1.4),
+      focusedBorder: border(AppColors.redText, 1.4),
       errorBorder: border(AppColors.errorBorder),
       focusedErrorBorder: border(AppColors.errorBorder, 1.4),
       errorStyle: TextStyle(fontSize: 12, color: AppColors.error),
@@ -142,10 +154,12 @@ ThemeData buildTheme(String lang, {bool dark = false}) {
       trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? AppColors.red : AppColors.chip),
       trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
     ),
-    datePickerTheme: DatePickerThemeData(backgroundColor: AppColors.surface, surfaceTintColor: Colors.transparent),
-    timePickerTheme: TimePickerThemeData(backgroundColor: AppColors.surface),
     dialogTheme: DialogThemeData(backgroundColor: AppColors.surface, surfaceTintColor: Colors.transparent),
-    progressIndicatorTheme: ProgressIndicatorThemeData(color: AppColors.red),
+    popupMenuTheme: PopupMenuThemeData(color: AppColors.surface, surfaceTintColor: Colors.transparent),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: AppColors.redText,
+      refreshBackgroundColor: AppColors.surface,
+    ),
     pageTransitionsTheme: const PageTransitionsTheme(builders: {
       TargetPlatform.android: CupertinoPageTransitionsBuilder(),
       TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),

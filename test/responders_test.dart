@@ -11,7 +11,7 @@ void main() {
         bloodType: BloodType.bPos,
         unitsNeeded: 2,
         hospitalId: 1,
-        urgency: Urgency.normal,
+        contactPhone: '591234567',
         neededAt: DateTime.now().add(const Duration(hours: 4)),
       ));
       final list = await api.responders(r.id);
@@ -29,6 +29,25 @@ void main() {
       mine = (await api.myRequests()).firstWhere((x) => x.id == r.id);
       expect(mine.confirmedCount, 2);
       expect(mine.status, RequestStatus.fulfilled);
+    });
+
+    test('accepted requests show up in the Accepted list; ineligible ones do not', () async {
+      final api = MockApi()..setToken('t');
+      await api.login('591234567', '123456');
+      expect(await api.acceptedRequests(), isEmpty);
+
+      final matched = await api.matchedRequests();
+      expect(matched.length, greaterThanOrEqualTo(2));
+      final qs = await api.eligibilityQuestions();
+      final ok = {for (final q in qs) q.id: !q.disqualifyingAnswer};
+      final bad = {for (final q in qs) q.id: q.disqualifyingAnswer};
+
+      expect(await api.respond(matched[0].id, ok), ResponseStatus.accepted);
+      expect(await api.respond(matched[1].id, bad), ResponseStatus.ineligible);
+
+      final accepted = await api.acceptedRequests();
+      expect(accepted.map((r) => r.id), [matched[0].id]);
+      expect(accepted.single.myResponse, ResponseStatus.accepted);
     });
 
     test('Responder reads the API shape', () {

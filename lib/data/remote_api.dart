@@ -55,8 +55,8 @@ class RemoteApi implements LifeShareApi {
 
   // ---------- requests ----------
   @override
-  Future<List<BloodRequest>> feed({Urgency? urgency, String? query}) async => _list(
-        await client.get('/api/requests', query: {'urgency': urgency?.apiName, 'q': query}),
+  Future<List<BloodRequest>> feed({String? query}) async => _list(
+        await client.get('/api/requests', query: {'q': query}),
         BloodRequest.fromJson,
       );
 
@@ -67,6 +67,10 @@ class RemoteApi implements LifeShareApi {
   @override
   Future<List<BloodRequest>> matchedRequests() async =>
       _list(await client.get('/api/requests/matched'), BloodRequest.fromJson);
+
+  @override
+  Future<List<BloodRequest>> acceptedRequests() async =>
+      _list(await client.get('/api/requests/accepted'), BloodRequest.fromJson);
 
   @override
   Future<BloodRequest> createRequest(NewRequest request) async => BloodRequest.fromJson(

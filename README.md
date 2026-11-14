@@ -76,7 +76,7 @@ lib/
     strings.dart             every Arabic + English text (add new text here)
     theme.dart               colours, fonts, buttons, inputs
   models/
-    enums.dart               BloodType (+ compatibility), Gender, Urgency, statuses
+    enums.dart               BloodType (+ compatibility), Gender, statuses
     models.dart              City, Hospital, AppUser, BloodRequest, ... with fromJson/toJson
   data/
     lifeshare_api.dart       the interface every screen uses
@@ -84,7 +84,7 @@ lib/
     mock_api.dart            sample data for demo mode
     api_client.dart          HTTP + JWT header + error handling
   state/app_state.dart       language, token, user, cities/hospitals; context.app / context.tr()
-  widgets/                   mascot, bottom bar, inputs (phone, OTP), cards, shared UI
+  widgets/                   bottom bar, inputs (phone, OTP), cards, shared UI
   screens/
     splash_screen.dart       logo while the session loads
     welcome_screen.dart      Get started / Log in

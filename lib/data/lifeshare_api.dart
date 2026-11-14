@@ -26,9 +26,13 @@ abstract class LifeShareApi {
   Future<List<Donation>> donations();
 
   // Requests
-  Future<List<BloodRequest>> feed({Urgency? urgency, String? query});
+  Future<List<BloodRequest>> feed({String? query});
   Future<List<BloodRequest>> myRequests();
   Future<List<BloodRequest>> matchedRequests();
+
+  /// Requests the user accepted (any status, so fulfilled or cancelled ones
+  /// stay visible), newest first.
+  Future<List<BloodRequest>> acceptedRequests();
   Future<BloodRequest> createRequest(NewRequest request);
   Future<void> cancelRequest(int requestId);
 

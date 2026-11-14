@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
 import '../../widgets/inputs.dart';
-import '../../widgets/mascot.dart';
-import '../../widgets/scene_art.dart';
 import 'otp_screen.dart';
 
 /// Sign-up step 2: phone number. Sends the OTP and opens step 3.
@@ -59,54 +56,44 @@ class _SignupPhoneScreenState extends State<SignupPhoneScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.app;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        body: SafeArea(
-          top: false,
-          child: Column(children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  const AuthHero(pose: MascotPose.phone, step: 2),
+    final tt = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Column(children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              children: [
+                const StepHeader(step: 2),
+                const SizedBox(height: 32),
+                Text(app.t('phoneTitle'), style: tt.headlineSmall!.copyWith(fontSize: 26)),
+                const SizedBox(height: 8),
+                Text(app.t('phoneSub'), style: TextStyle(fontSize: 15, height: 1.5, color: AppColors.muted)),
+                const SizedBox(height: 28),
+                AuthPhoneInput(
+                  controller: _phone,
+                  errorText: _error,
+                  helperText: app.t('phoneStarts'),
+                  onSubmitted: (_) => _send(),
+                ),
+                const SizedBox(height: 16),
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ScreenTitle(app.t('phoneTitle'),
-                              subtitle: app.t('phoneSub')),
-                          const SizedBox(height: 18),
-                          FieldLabel(app.t('phone')),
-                          PhoneField(
-                              controller: _phone,
-                              errorText: _error,
-                              onSubmitted: (_) => _send()),
-                          const SizedBox(height: 12),
-                          Row(children: [
-                            Icon(Icons.lock_outline_rounded,
-                                size: 14, color: AppColors.muted),
-                            const SizedBox(width: 6),
-                            Expanded(
-                                child: Text(app.t('private'),
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall)),
-                          ]),
-                        ]),
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Icon(Icons.lock_outline_rounded, size: 15, color: AppColors.hint),
                   ),
-                ],
-              ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(app.t('private'), style: TextStyle(fontSize: 12.5, height: 1.5, color: AppColors.hint))),
+                ]),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: PrimaryButton(
-                  label: app.t('sendCode'),
-                  loading: _loading,
-                  onPressed: _send),
-            ),
-          ]),
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: PrimaryButton(label: app.t('continue'), height: 52, loading: _loading, onPressed: _send),
+          ),
+        ]),
       ),
     );
   }

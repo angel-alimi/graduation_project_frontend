@@ -30,5 +30,15 @@ void main() {
       expect(isValidPhone('0521234567'), isFalse);
       expect(isValidPhone('59123'), isFalse);
     });
+    String typed(String v) => const PhoneInputFormatter()
+        .formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: v))
+        .text;
+    test('input stops at 9 digits and is formatted', () {
+      expect(typed('5912345678999'), '591 234 567');
+      expect(typed('0591234567'), '591 234 567');
+      expect(typed('+970 59 123 4567'), '591 234 567');
+      expect(typed('59a1'), '591');
+      expect(isValidPhone(typed('0591234567')), isTrue);
+    });
   });
 }

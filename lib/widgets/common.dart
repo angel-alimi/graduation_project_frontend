@@ -4,7 +4,6 @@ import 'package:intl/intl.dart' show Bidi;
 import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
-import 'mascot.dart';
 
 /// Small drop logo + "LifeShare" wordmark.
 class BrandRow extends StatelessWidget {
@@ -30,12 +29,12 @@ class Wordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: fontSize, height: 1.1);
+    final style = TextStyle(fontFamily: AppFonts.brand, fontWeight: FontWeight.w800, fontSize: fontSize, height: 1.1);
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Text.rich(TextSpan(children: [
         TextSpan(text: spaced ? 'Life ' : 'Life', style: style.copyWith(color: AppColors.ink)),
-        TextSpan(text: 'Share', style: style.copyWith(color: AppColors.red)),
+        TextSpan(text: 'Share', style: style.copyWith(color: AppColors.redText)),
       ])),
     );
   }
@@ -85,14 +84,15 @@ class IconBox extends StatelessWidget {
       );
 }
 
-/// Chevron that points "forward" in both RTL and LTR.
+/// Chevron that points "forward" in both RTL and LTR. The Material chevron
+/// mirrors itself in right-to-left, so it must not be swapped by hand.
 class ForwardChevron extends StatelessWidget {
   const ForwardChevron({super.key, this.color, this.size = 20});
   final Color? color;
   final double size;
   @override
   Widget build(BuildContext context) => Icon(
-        Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+        Icons.chevron_right_rounded,
         color: color ?? AppColors.hint,
         size: size,
       );
@@ -135,7 +135,7 @@ class SquareIconButton extends StatelessWidget {
           width: size,
           height: size,
           child: Stack(alignment: Alignment.center, children: [
-            Icon(icon, size: size * .48, color: AppColors.ink),
+            Icon(icon, size: size * .48, color: onPressed == null ? AppColors.hint : AppColors.ink),
             if (badge)
               PositionedDirectional(
                 top: size * .22,
@@ -385,7 +385,7 @@ class ErrorText extends StatelessWidget {
       );
 }
 
-/// Selectable chip (blood types, gender, urgency).
+/// Selectable chip (blood types, gender).
 class ChoiceTile extends StatelessWidget {
   const ChoiceTile({super.key, required this.label, required this.selected, required this.onTap, this.latinFont = false, this.height = 40});
   final String label;
@@ -459,38 +459,60 @@ class BloodLabel extends StatelessWidget {
   Widget build(BuildContext context) => Directionality(
         textDirection: TextDirection.ltr,
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.water_drop_rounded, size: size, color: AppColors.red),
+          Icon(Icons.water_drop_rounded, size: size, color: AppColors.redText),
           const SizedBox(width: 3),
           Text(type.display, style: TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: size, color: AppColors.ink)),
         ]),
       );
 }
 
-/// Centred empty state with the mascot.
+/// Blood type on its own (no drop): bold dark text in a light grey rounded box.
+class BloodTypeTag extends StatelessWidget {
+  const BloodTypeTag(this.type, {super.key, this.small = false});
+  final BloodType type;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: BoxConstraints(minWidth: small ? 34 : 44),
+        height: small ? 24 : 32,
+        padding: EdgeInsets.symmetric(horizontal: small ? 7 : 10),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.chip,
+          borderRadius: BorderRadius.circular(small ? 7 : 10),
+        ),
+        child: Text(type.display,
+            textDirection: TextDirection.ltr,
+            style: TextStyle(
+                fontFamily: AppFonts.latin, fontSize: small ? 12.5 : 15, fontWeight: FontWeight.w800, color: AppColors.ink)),
+      );
+}
+
+/// Centred empty state: an outline icon in a soft circle, a title and a line of help.
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.title, required this.subtitle, this.pose = MascotPose.hug});
+  const EmptyState({super.key, required this.title, required this.subtitle, this.icon = Icons.inbox_outlined});
   final String title;
   final String subtitle;
-  final MascotPose pose;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+        padding: const EdgeInsets.fromLTRB(32, 0, 32, 40),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 84,
+            height: 84,
             decoration: BoxDecoration(color: AppColors.soft, shape: BoxShape.circle),
-            alignment: Alignment.bottomCenter,
-            clipBehavior: Clip.antiAlias,
-            child: Mascot(pose: pose, size: 88),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 36, color: AppColors.muted),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
           const SizedBox(height: 4),
-          Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.muted), textAlign: TextAlign.center),
+          Text(subtitle, style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.muted), textAlign: TextAlign.center),
         ]),
       ),
     );
@@ -515,6 +537,59 @@ class ErrorState extends StatelessWidget {
           ]),
         ),
       );
+}
+
+/// Centered confirmation pop-up, like the alerts of big apps: title and message
+/// centered, the main action as a full-width button, Cancel as plain text under it.
+/// Returns true when the main action is tapped.
+Future<bool?> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  String? message,
+  required String confirmLabel,
+  String? cancelLabel,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: AppColors.surface,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 36),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 26, 22, 12),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(title,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, height: 1.35, color: AppColors.ink)),
+          if (message != null) ...[
+            const SizedBox(height: 10),
+            Text(message,
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 14, height: 1.6, color: AppColors.muted)),
+          ],
+          const SizedBox(height: 22),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              shape: const StadiumBorder(),
+            ),
+            child: Text(confirmLabel),
+          ),
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.muted,
+              minimumSize: const Size.fromHeight(46),
+              shape: const StadiumBorder(),
+            ),
+            child: Text(cancelLabel ?? ctx.tr('cancel'), style: const TextStyle(fontSize: 15)),
+          ),
+        ]),
+      ),
+    ),
+  );
 }
 
 /// Opens a bottom sheet styled like the prototype.
@@ -592,7 +667,7 @@ class ListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chevron = showChevron ?? (onTap != null && trailing == null);
-    final fg = destructive ? AppColors.red : AppColors.ink;
+    final fg = destructive ? AppColors.redText : AppColors.ink;
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
@@ -600,7 +675,7 @@ class ListRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 12, 8),
           child: Row(children: [
-            Icon(icon, size: 20, color: destructive ? AppColors.red : AppColors.muted),
+            Icon(icon, size: 20, color: destructive ? AppColors.redText : AppColors.muted),
             const SizedBox(width: 14),
             Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: fg))),
             if (value != null)

@@ -43,10 +43,10 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
     } else if (list == null) {
       body = const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
     } else if (list.isEmpty) {
-      body = EmptyState(title: app.t('noDonations'), subtitle: app.t('noDonationsSub'));
+      body = EmptyState(title: app.t('noDonations'), subtitle: app.t('noDonationsSub'), icon: Icons.bloodtype_outlined);
     } else {
       body = RefreshIndicator(
-        color: AppColors.red,
+        color: AppColors.redText,
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.only(bottom: 24),

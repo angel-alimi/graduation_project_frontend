@@ -1,6 +1,4 @@
-/// Enums shared by the app and the backend.
-/// [apiName] is exactly what the Spring Boot backend sends and receives
-/// (use the same names for your Java enums).
+
 library;
 
 enum BloodType {
@@ -17,7 +15,6 @@ enum BloodType {
   final String label;
   final String apiName;
 
-  /// Label with a real minus sign, for display.
   String get display => label.replaceAll('-', '−');
 
   static BloodType fromApi(String value) => BloodType.values.firstWhere(
@@ -59,17 +56,6 @@ enum Gender {
 
   static Gender fromApi(String value) =>
       Gender.values.firstWhere((g) => g.apiName == value, orElse: () => Gender.female);
-}
-
-enum Urgency {
-  normal('NORMAL'),
-  urgent('URGENT');
-
-  const Urgency(this.apiName);
-  final String apiName;
-
-  static Urgency fromApi(String value) =>
-      Urgency.values.firstWhere((u) => u.apiName == value, orElse: () => Urgency.normal);
 }
 
 enum RequestStatus {

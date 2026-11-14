@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
 import '../../widgets/inputs.dart';
-import '../../widgets/mascot.dart';
-import '../../widgets/scene_art.dart';
 import 'otp_screen.dart';
 import 'signup_info_screen.dart';
 
@@ -56,58 +53,46 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.app;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        body: SafeArea(
-          top: false,
-          child: Column(children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  const AuthHero(pose: MascotPose.wave, trailing: LangToggle()),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ScreenTitle(app.t('loginTitle'),
-                              subtitle: app.t('loginSub')),
-                          const SizedBox(height: 18),
-                          FieldLabel(app.t('phone')),
-                          PhoneField(
-                              controller: _phone,
-                              errorText: _error,
-                              onSubmitted: (_) => _send()),
-                        ]),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: PrimaryButton(
-                  label: app.t('sendCode'),
-                  loading: _loading,
-                  onPressed: _send),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child:
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(app.t('noAccount'),
-                    style: TextStyle(fontSize: 13, color: AppColors.muted)),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                          builder: (_) => const SignupInfoScreen())),
-                  child: Text(app.t('createAccount')),
+    final tt = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Column(children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              children: [
+                const Row(children: [BackSquareButton(), Spacer(), LangToggle()]),
+                const SizedBox(height: 32),
+                Text(app.t('loginTitle'), style: tt.headlineSmall!.copyWith(fontSize: 26)),
+                const SizedBox(height: 8),
+                Text(app.t('loginSub'), style: TextStyle(fontSize: 15, height: 1.5, color: AppColors.muted)),
+                const SizedBox(height: 28),
+                AuthPhoneInput(
+                  controller: _phone,
+                  errorText: _error,
+                  helperText: app.t('phoneStarts'),
+                  onSubmitted: (_) => _send(),
                 ),
-              ]),
+              ],
             ),
-          ]),
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+            child: PrimaryButton(label: app.t('continue'), height: 52, loading: _loading, onPressed: _send),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text(app.t('noAccount'), style: TextStyle(fontSize: 13, color: AppColors.muted)),
+              TextButton(
+                onPressed: () => Navigator.of(context)
+                    .pushReplacement(MaterialPageRoute(builder: (_) => const SignupInfoScreen())),
+                child: Text(app.t('createAccount')),
+              ),
+            ]),
+          ),
+        ]),
       ),
     );
   }

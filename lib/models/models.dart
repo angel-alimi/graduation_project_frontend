@@ -166,7 +166,6 @@ class BloodRequest {
   final int cityId;
   final BloodType bloodType;
   final int unitsNeeded;
-  final Urgency urgency;
   final String? patientName;
   final String? note;
   final RequestStatus status;
@@ -196,7 +195,6 @@ class BloodRequest {
     required this.cityId,
     required this.bloodType,
     required this.unitsNeeded,
-    required this.urgency,
     required this.status,
     required this.createdAt,
     this.patientName,
@@ -229,7 +227,6 @@ class BloodRequest {
         cityId: cityId,
         bloodType: bloodType,
         unitsNeeded: unitsNeeded,
-        urgency: urgency,
         status: status ?? this.status,
         createdAt: createdAt,
         patientName: patientName,
@@ -250,7 +247,6 @@ class BloodRequest {
         cityId: j['cityId'] as int,
         bloodType: BloodType.fromApi(j['bloodType'] as String),
         unitsNeeded: j['unitsNeeded'] as int,
-        urgency: Urgency.fromApi(j['urgency'] as String),
         patientName: j['patientName'] as String?,
         note: j['note'] as String?,
         status: RequestStatus.fromApi(j['status'] as String),
@@ -320,11 +316,14 @@ class NewRequest {
   final BloodType bloodType;
   final int unitsNeeded;
   final int hospitalId;
-  final Urgency urgency;
   final DateTime neededAt;
   final String? note;
 
-  /// Optional extra contact numbers (local 9 digits). The requester's own number is always used.
+  /// Main contact number for this request (local 9 digits). Filled with the
+  /// user's own number by default; the user can change it.
+  final String contactPhone;
+
+  /// Optional extra contact numbers (local 9 digits), never repeating [contactPhone].
   final List<String> contactPhones;
 
   const NewRequest({
@@ -332,19 +331,19 @@ class NewRequest {
     required this.bloodType,
     required this.unitsNeeded,
     required this.hospitalId,
-    required this.urgency,
     required this.neededAt,
     this.note,
+    required this.contactPhone,
     this.contactPhones = const [],
   });
 
   Map<String, dynamic> toJson() => {
+        'contactPhone': contactPhone,
         'contactPhones': contactPhones,
         'patientName': patientName.trim(),
         'bloodType': bloodType.apiName,
         'unitsNeeded': unitsNeeded,
         'hospitalId': hospitalId,
-        'urgency': urgency.apiName,
         'neededAt': neededAt.toUtc().toIso8601String(),
         'note': (note ?? '').trim().isEmpty ? null : note!.trim(),
       };
@@ -411,19 +410,22 @@ class AppNotification {
 
 String formatYmd(DateTime d) => _ymd(d);
 
-String formatDate(DateTime d, String lang) {
+/// Month name for [month] (1-12), e.g. "Jun" or "يونيو".
+String monthName(int month, String lang) {
   const ar = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const en = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  final m = (lang == 'ar' ? ar : en)[d.month - 1];
-  return '${d.day} $m ${d.year}';
+  return (lang == 'ar' ? ar : en)[month - 1];
 }
+
+String formatDate(DateTime d, String lang) => '${d.day} ${monthName(d.month, lang)} ${d.year}';
+
+/// "ص" / "م" or "AM" / "PM".
+String dayPeriod(bool pm, String lang) => lang == 'ar' ? (pm ? 'م' : 'ص') : (pm ? 'PM' : 'AM');
 
 /// 12-hour time with the app's Latin digits, e.g. 2:05 م or 2:05 PM.
 String formatTime(int hour, int minute, String lang) {
   final h = hour % 12 == 0 ? 12 : hour % 12;
-  final pm = hour >= 12;
-  final suffix = lang == 'ar' ? (pm ? 'م' : 'ص') : (pm ? 'PM' : 'AM');
-  return '$h:${minute.toString().padLeft(2, '0')} $suffix';
+  return '$h:${minute.toString().padLeft(2, '0')} ${dayPeriod(hour >= 12, lang)}';
 }
 
 String formatDateTime(DateTime d, String lang) =>

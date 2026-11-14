@@ -4,22 +4,22 @@ import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
-import '../widgets/mascot.dart';
 import 'home_shell.dart';
 
-/// Full-screen notifications list.
-class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key, required this.shell});
-  final ShellController shell;
+/// Notifications tab (shown inside the home shell, like the other tabs).
+class NotificationsTab extends StatefulWidget {
+  const NotificationsTab({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  State<NotificationsTab> createState() => _NotificationsTabState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  late Future<List<AppNotification>> _future = context.appRead.api.notifications();
+class _NotificationsTabState extends State<NotificationsTab> {
+  late Future<List<AppNotification>> _future =
+      context.appRead.api.notifications();
 
-  void _reload() => setState(() => _future = context.appRead.api.notifications());
+  void _reload() =>
+      setState(() => _future = context.appRead.api.notifications());
 
   Future<void> _markAll() async {
     final app = context.appRead;
@@ -34,74 +34,82 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _open(AppNotification n) {
     switch (n.type) {
       case NotificationType.match:
-        widget.shell.go(Tabs.requests, segment: 1);
+        ShellScope.of(context).go(Tabs.requests, segment: 1);
         break;
       case NotificationType.requestPosted:
-        widget.shell.go(Tabs.requests, segment: 0);
+        ShellScope.of(context).go(Tabs.requests, segment: 0);
         break;
       case NotificationType.reminder:
       case NotificationType.welcome:
-        widget.shell.go(Tabs.home);
+        ShellScope.of(context).go(Tabs.settings);
         break;
     }
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final app = context.app;
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [
-              const BackSquareButton(),
-              const SizedBox(width: 12),
-              Expanded(child: Text(app.t('notifications'), style: Theme.of(context).textTheme.titleLarge)),
-              // Plain, quiet text action (no accent colour)
-              InkWell(
-                onTap: _markAll,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  child: Text(app.t('markAllRead'),
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.muted)),
-                ),
-              ),
-            ]),
-            const SizedBox(height: 10),
-            if (!app.notificationsOn)
-              Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.chip, borderRadius: BorderRadius.circular(10)),
-                child: Text(app.t('notifsOffBanner'), style: const TextStyle(fontSize: 12)),
-              ),
-            Expanded(
-              child: FutureBuilder<List<AppNotification>>(
-                future: _future,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
-                  }
-                  if (snap.hasError) return ErrorState(message: app.errorText(snap.error!), onRetry: _reload);
-                  final list = snap.data!;
-                  if (list.isEmpty) {
-                    return EmptyState(title: app.t('emptyNotifs'), subtitle: app.t('nWelcomeB'), pose: MascotPose.phone);
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    itemCount: list.length,
-                    separatorBuilder: (_, __) => const Divider(),
-                    itemBuilder: (context, i) => _NotificationTile(n: list[i], onTap: () => _open(list[i])),
-                  );
-                },
-              ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(
+              child: Text(app.t('notifications'),
+                  style: Theme.of(context).textTheme.titleLarge)),
+          // Plain, quiet text action (no accent colour)
+          InkWell(
+            onTap: _markAll,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Text(app.t('markAllRead'),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.muted)),
             ),
-          ]),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        if (!app.notificationsOn)
+          Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+                color: AppColors.chip, borderRadius: BorderRadius.circular(10)),
+            child: Text(app.t('notifsOffBanner'),
+                style: const TextStyle(fontSize: 12)),
+          ),
+        Expanded(
+          child: FutureBuilder<List<AppNotification>>(
+            future: _future,
+            builder: (context, snap) {
+              if (snap.connectionState != ConnectionState.done) {
+                return const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2.4));
+              }
+              if (snap.hasError) {
+                return ErrorState(
+                    message: app.errorText(snap.error!), onRetry: _reload);
+              }
+              final list = snap.data!;
+              if (list.isEmpty) {
+                return EmptyState(
+                    title: app.t('emptyNotifs'),
+                    subtitle: app.t('nWelcomeB'),
+                    icon: Icons.notifications_none_rounded);
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.only(bottom: 24),
+                itemCount: list.length,
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, i) =>
+                    _NotificationTile(n: list[i], onTap: () => _open(list[i])),
+              );
+            },
+          ),
         ),
-      ),
+      ]),
     );
   }
 }
@@ -115,13 +123,15 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = context.app;
     final bt = n.bloodType?.display ?? '';
-    final hospital = n.hospitalId == null ? '' : app.hospitalName(n.hospitalId!);
+    final hospital =
+        n.hospitalId == null ? '' : app.hospitalName(n.hospitalId!);
 
     late final String title, body;
     switch (n.type) {
       case NotificationType.match:
         title = app.t('nMatch');
-        body = app.t('nMatchB', {'name': n.personName ?? '', 'bt': bt, 'hospital': hospital});
+        body = app.t('nMatchB',
+            {'name': n.personName ?? '', 'bt': bt, 'hospital': hospital});
         break;
       case NotificationType.requestPosted:
         title = app.t('nPosted');
@@ -143,12 +153,19 @@ class _NotificationTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: TextStyle(fontSize: 14, fontWeight: n.read ? FontWeight.w600 : FontWeight.w800)),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: n.read ? FontWeight.w600 : FontWeight.w800)),
               const SizedBox(height: 3),
-              Text(body, style: TextStyle(fontSize: 13, height: 1.55, color: AppColors.muted)),
+              Text(body,
+                  style: TextStyle(
+                      fontSize: 13, height: 1.55, color: AppColors.muted)),
               const SizedBox(height: 3),
-              Text(app.timeAgo(n.createdAt), style: TextStyle(fontSize: 12, color: AppColors.hint)),
+              Text(app.timeAgo(n.createdAt),
+                  style: TextStyle(fontSize: 12, color: AppColors.hint)),
             ]),
           ),
           if (!n.read)
@@ -156,7 +173,8 @@ class _NotificationTile extends StatelessWidget {
               margin: const EdgeInsetsDirectional.only(start: 8, top: 6),
               width: 8,
               height: 8,
-              decoration: BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
+              decoration:
+                  BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
             ),
         ]),
       ),

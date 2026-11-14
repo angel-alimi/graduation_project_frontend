@@ -4,7 +4,6 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
-import '../../widgets/mascot.dart';
 import '../../widgets/request_card.dart';
 import '../home_shell.dart';
 import '../sheets/contact_sheet.dart';
@@ -36,7 +35,11 @@ class _RequestsTabState extends State<RequestsTab> {
 
   Future<List<BloodRequest>> _fetch() {
     final api = context.appRead.api;
-    return _segment == 0 ? api.myRequests() : api.matchedRequests();
+    return switch (_segment) {
+      0 => api.myRequests(),
+      1 => api.matchedRequests(),
+      _ => api.acceptedRequests(),
+    };
   }
 
   void _load() => setState(() => _future = _fetch());
@@ -59,16 +62,21 @@ class _RequestsTabState extends State<RequestsTab> {
     final app = context.app;
     final shell = ShellScope.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.only(top: 16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(app.t('requests'), style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 14),
-        _Segmented(
-          value: _segment,
-          labels: [app.t('mine'), app.t('matched')],
-          onChanged: (v) => shell.go(Tabs.requests, segment: v),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(app.t('requests'), style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 14),
+            _Segmented(
+              value: _segment,
+              labels: [app.t('mine'), app.t('matched'), app.t('acceptedTab')],
+              onChanged: (v) => shell.go(Tabs.requests, segment: v),
+            ),
+          ]),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Expanded(
           child: FutureBuilder<List<BloodRequest>>(
             future: _future,
@@ -79,17 +87,19 @@ class _RequestsTabState extends State<RequestsTab> {
               if (snap.hasError) return ErrorState(message: app.errorText(snap.error!), onRetry: _load);
               final list = snap.data ?? const [];
               if (list.isEmpty) {
-                return _segment == 0
-                    ? EmptyState(title: app.t('emptyMine'), subtitle: app.t('emptyMineSub'))
-                    : EmptyState(title: app.t('emptyMatch'), subtitle: app.t('emptyMatchSub'), pose: MascotPose.phone);
+                return switch (_segment) {
+                  0 => EmptyState(title: app.t('emptyMine'), subtitle: app.t('emptyMineSub'), icon: Icons.assignment_outlined),
+                  1 => EmptyState(title: app.t('emptyMatch'), subtitle: app.t('emptyMatchSub'), icon: Icons.bloodtype_outlined),
+                  _ => EmptyState(title: app.t('emptyAccepted'), subtitle: app.t('emptyAcceptedSub'), icon: Icons.volunteer_activism_outlined),
+                };
               }
               return RefreshIndicator(
-                color: AppColors.red,
+                color: AppColors.redText,
                 onRefresh: () async => _load(),
                 child: ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: list.length + (_segment == 1 ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, i) {
                     if (_segment == 1 && i == 0) {
                       return Text(app.t('matchNote', {'bt': app.user?.bloodType.display ?? ''}),
@@ -102,43 +112,76 @@ class _RequestsTabState extends State<RequestsTab> {
                       return RequestCard(
                         request: r,
                         onTap: openResponders,
-                        action: Row(mainAxisSize: MainAxisSize.min, children: [
-                          open
-                              ? SoftButton(
-                                  label: app.t('cancelRequest'),
-                                  destructive: true,
-                                  onPressed: () => _cancel(r),
-                                )
-                              : SoftButton(label: app.t('fulfilled'), done: true),
-                          const SizedBox(width: 8),
-                          AcceptButton(
-                            label: app.t('respondersN', {'n': r.respondersCount}),
+                        menu: [
+                          if (open)
+                            PostAction(
+                              icon: Icons.close_rounded,
+                              label: app.t('cancelRequest'),
+                              destructive: true,
+                              onTap: () => _cancel(r),
+                            ),
+                        ],
+                        actions: [
+                          if (!open)
+                            PostAction(icon: Icons.check_circle_outline_rounded, label: app.t('fulfilled'), done: true),
+                          PostAction(
                             icon: Icons.people_outline_rounded,
-                            onPressed: openResponders,
+                            label: app.t('responders'),
+                            count: r.respondersCount,
+                            primary: true,
+                            onTap: openResponders,
                           ),
-                        ]),
+                        ],
+                      );
+                    }
+                    if (_segment == 2) {
+                      // Accepted: where things stand, plus Contact while the request is open.
+                      final String status;
+                      if (r.status == RequestStatus.cancelled) {
+                        status = app.t('reqCancelled');
+                      } else if (r.myResponse == ResponseStatus.completed) {
+                        status = app.t('donationConfirmed');
+                      } else if (r.status == RequestStatus.fulfilled) {
+                        status = app.t('reqFulfilled');
+                      } else {
+                        status = app.t('responded');
+                      }
+                      return RequestCard(
+                        request: r,
+                        onTap: () => showRequestDetailSheet(context, r).then((_) => _load()),
+                        actions: [
+                          PostAction(label: status, done: true),
+                          if (r.status == RequestStatus.open)
+                            PostAction(
+                              icon: Icons.call_outlined,
+                              label: app.t('contact'),
+                              onTap: () => showContactSheet(context, r),
+                            ),
+                        ],
                       );
                     }
                     final done = r.myResponse != null;
                     return RequestCard(
                       request: r,
                       onTap: () => showRequestDetailSheet(context, r).then((_) => _load()),
-                      action: Row(mainAxisSize: MainAxisSize.min, children: [
-                        SoftButton(
-                          label: app.t('contact'),
-                          onPressed: () => showContactSheet(context, r),
-                        ),
-                        const SizedBox(width: 8),
+                      actions: [
                         done
-                            ? SoftButton(
+                            ? PostAction(
+                                icon: Icons.check_circle_outline_rounded,
                                 label: app.t(r.myResponse == ResponseStatus.ineligible ? 'ineligibleTag' : 'responded'),
                                 done: true,
                               )
-                            : AcceptButton(
+                            : PostAction(
                                 label: app.t('canDonate'),
-                                onPressed: () => showRequestDetailSheet(context, r, startWithResponse: true).then((_) => _load()),
+                                primary: true,
+                                onTap: () => showRequestDetailSheet(context, r, startWithResponse: true).then((_) => _load()),
                               ),
-                      ]),
+                        PostAction(
+                          icon: Icons.call_outlined,
+                          label: app.t('contact'),
+                          onTap: () => showContactSheet(context, r),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -151,7 +194,7 @@ class _RequestsTabState extends State<RequestsTab> {
   }
 }
 
-/// Two-option segmented control with a sliding white knob.
+/// Segmented control with a sliding white knob (any number of options).
 class _Segmented extends StatelessWidget {
   const _Segmented({required this.value, required this.labels, required this.onChanged});
   final int value;
@@ -168,9 +211,9 @@ class _Segmented extends StatelessWidget {
         AnimatedAlign(
           duration: const Duration(milliseconds: 380),
           curve: const Cubic(.34, 1.2, .64, 1),
-          alignment: value == 0 ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
+          alignment: AlignmentDirectional(labels.length < 2 ? -1 : -1 + 2 * value / (labels.length - 1), 0),
           child: FractionallySizedBox(
-            widthFactor: .5,
+            widthFactor: 1 / labels.length,
             heightFactor: 1,
             child: Container(
               decoration: BoxDecoration(

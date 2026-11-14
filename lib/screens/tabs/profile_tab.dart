@@ -6,6 +6,8 @@ import '../../state/app_state.dart';
 import '../../widgets/common.dart';
 import '../../widgets/inputs.dart';
 import '../../widgets/level_badge.dart';
+import '../donation_history_screen.dart';
+import '../home_shell.dart';
 import '../terms_screen.dart';
 import '../welcome_screen.dart';
 
@@ -20,18 +22,11 @@ class ProfileTab extends StatefulWidget {
 class _ProfileTabState extends State<ProfileTab> {
   Future<void> _confirmLogout(BuildContext context) async {
     final app = context.appRead;
-    final yes = await showAppSheet<bool>(
+    final yes = await showConfirmDialog(
       context,
       title: app.t('logoutQ'),
-      builder: (ctx) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(app.t('logoutSub'), style: TextStyle(fontSize: 13, color: AppColors.muted)),
-        SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: OutlinedButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(app.t('cancel')))),
-          SizedBox(width: 12),
-          Expanded(child: PrimaryButton(label: app.t('logout'), onPressed: () => Navigator.of(ctx).pop(true))),
-        ]),
-      ]),
+      message: app.t('logoutSub'),
+      confirmLabel: app.t('logout'),
     );
     if (yes != true || !context.mounted) return;
     await app.logout();
@@ -110,7 +105,7 @@ class _ProfileTabState extends State<ProfileTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        Text(app.t('profile'), style: Theme.of(context).textTheme.titleLarge),
+        Text(app.t('settings'), style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 14),
 
         // Header card
@@ -139,12 +134,32 @@ class _ProfileTabState extends State<ProfileTab> {
           padding: EdgeInsets.symmetric(vertical: 14),
           child: IntrinsicHeight(
             child: Row(children: [
-              _Count(label: app.t('myRequests'), value: u.requestsCount),
+              _Count(
+                label: app.t('myRequests'),
+                value: u.requestsCount,
+                onTap: () => ShellScope.of(context).go(Tabs.requests, segment: 0),
+              ),
               VerticalDivider(width: 1),
-              _Count(label: app.t('myResponses'), value: u.responsesCount),
+              _Count(
+                label: app.t('myResponses'),
+                value: u.responsesCount,
+                onTap: () => ShellScope.of(context).go(Tabs.requests, segment: 2),
+              ),
             ]),
           ),
         ),
+        SizedBox(height: 16),
+
+        SectionLabel(app.t('donationsSection')),
+        ListGroup(children: [
+          ListRow(
+            icon: Icons.history_rounded,
+            label: app.t('donationRecord'),
+            value: '${app.donations?.length ?? 0}',
+            valueLatin: true,
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DonationHistoryScreen())),
+          ),
+        ]),
         SizedBox(height: 16),
 
         SectionLabel(app.t('personalInfo')),
@@ -201,15 +216,17 @@ class _ProfileTabState extends State<ProfileTab> {
           ),
         ]),
         SizedBox(height: 16),
-        ListGroup(children: [
-          ListRow(
-            icon: Icons.logout_rounded,
-            label: app.t('logout'),
-            destructive: true,
-            showChevron: false,
-            onTap: () => _confirmLogout(context),
+        AppCard(
+          padding: EdgeInsets.zero,
+          onTap: () => _confirmLogout(context),
+          child: SizedBox(
+            height: 52,
+            child: Center(
+              child: Text(app.t('logout'),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.redText)),
+            ),
           ),
-        ]),
+        ),
         SizedBox(height: 28),
         Center(
           child: Column(children: [
@@ -226,16 +243,20 @@ class _ProfileTabState extends State<ProfileTab> {
 }
 
 class _Count extends StatelessWidget {
-  const _Count({required this.label, required this.value});
+  const _Count({required this.label, required this.value, this.onTap});
   final String label;
   final int value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Column(children: [
-          Text('$value', style: const TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: 20)),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 12, color: AppColors.hint)),
-        ]),
+        child: InkWell(
+          onTap: onTap,
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text('$value', style: const TextStyle(fontFamily: AppFonts.latin, fontWeight: FontWeight.w800, fontSize: 20)),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 12, color: AppColors.hint)),
+          ]),
+        ),
       );
 }

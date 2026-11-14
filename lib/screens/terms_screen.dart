@@ -9,33 +9,25 @@ import '../widgets/common.dart';
 /// Version of the Terms the user accepts at sign-up. Bump it when the text changes.
 const kTermsVersion = '2026-11-09';
 
-/// Opens the Terms and Conditions as a popup sheet (like the legal pop-ups of big apps:
-/// grip, small title + date, compact small-type text, close button).
-/// With [showAgree], a sticky "I agree" bar is shown (enabled once scrolled to the end)
-/// and the sheet returns `true` when tapped.
+/// Opens the Terms and Conditions as a full page, like the legal pages of most
+/// apps: app bar with back arrow, document title and date, readable sections.
+/// With [showAgree], a sticky "I agree" bar is shown (enabled once scrolled to
+/// the end) and the page returns `true` when tapped.
 Future<bool?> showTermsSheet(BuildContext context, {bool showAgree = false}) {
-  return showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: AppColors.surface,
-    barrierColor: AppColors.scrim,
-    shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-    clipBehavior: Clip.antiAlias,
-    builder: (_) => _TermsSheet(showAgree: showAgree),
+  return Navigator.of(context).push<bool>(
+    MaterialPageRoute(builder: (_) => TermsScreen(showAgree: showAgree), fullscreenDialog: showAgree),
   );
 }
 
-class _TermsSheet extends StatefulWidget {
-  const _TermsSheet({required this.showAgree});
+class TermsScreen extends StatefulWidget {
+  const TermsScreen({super.key, this.showAgree = false});
   final bool showAgree;
 
   @override
-  State<_TermsSheet> createState() => _TermsSheetState();
+  State<TermsScreen> createState() => _TermsScreenState();
 }
 
-class _TermsSheetState extends State<_TermsSheet> {
+class _TermsScreenState extends State<TermsScreen> {
   final _scroll = ScrollController();
   _TermsDoc? _doc;
   String? _lang;
@@ -80,87 +72,57 @@ class _TermsSheetState extends State<_TermsSheet> {
     final app = context.app;
     final doc = _doc;
     final mq = MediaQuery.of(context);
-    return SizedBox(
-      height: mq.size.height * .88,
-      child: Column(children: [
-        // Grip
-        const SizedBox(height: 8),
-        Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-                color: AppColors.field,
-                borderRadius: BorderRadius.circular(2))),
-
-        // Header: small title + date, close button
-        Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(18, 8, 10, 10),
-          child: Row(children: [
-            Expanded(
-              child:
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(app.t('terms'),
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700, height: 1.3)),
-                if (doc != null) ...[
-                  const SizedBox(height: 2),
-                  Text(doc.updated,
-                      style: TextStyle(fontSize: 11, color: AppColors.hint)),
-                ],
-              ]),
-            ),
-            SquareIconButton(
-                icon: Icons.close_rounded,
-                size: 34,
-                tooltip: app.t('close'),
-                onPressed: () => Navigator.of(context).pop()),
-          ]),
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: .5,
+        shadowColor: AppColors.line,
+        centerTitle: true,
+        leading: IconButton(
+          tooltip: app.t(widget.showAgree ? 'close' : 'back'),
+          icon: Icon(widget.showAgree ? Icons.close_rounded : Icons.arrow_back_rounded, color: AppColors.ink),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        Divider(height: 1, color: AppColors.line),
-
-        // Body
-        Expanded(
-          child: doc == null
-              ? const Center(child: CircularProgressIndicator(strokeWidth: 2.4))
-              : Scrollbar(
-                  controller: _scroll,
-                  child: SingleChildScrollView(
-                    controller: _scroll,
-                    padding: EdgeInsets.fromLTRB(
-                        18, 14, 18, widget.showAgree ? 20 : 20 + mq.padding.bottom),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final p in doc.intro) ...[
-                            _Body(p, color: AppColors.ink),
-                            const SizedBox(height: 4),
-                          ],
-                          for (final s in doc.sections) _SectionView(s),
-                          const SizedBox(height: 22),
-                          Center(
-                              child: Image.asset('assets/images/logo_drop.png',
-                                  height: 18)),
-                        ]),
-                  ),
-                ),
-        ),
-
-        // Sticky agree bar (from sign-up)
-        if (widget.showAgree)
-          Container(
-            padding: EdgeInsets.fromLTRB(18, 10, 18, 10 + mq.padding.bottom),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.line)),
+        title: Text(app.t('terms'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+      ),
+      body: doc == null
+          ? const Center(child: CircularProgressIndicator(strokeWidth: 2.4))
+          : Scrollbar(
+              controller: _scroll,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                padding: EdgeInsets.fromLTRB(18, 8, 18, widget.showAgree ? 20 : 20 + mq.padding.bottom),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  Text(doc.updated, style: TextStyle(fontSize: 11, color: AppColors.hint)),
+                  const SizedBox(height: 10),
+                  for (final p in doc.intro) ...[
+                    _Body(p, color: AppColors.ink),
+                    const SizedBox(height: 4),
+                  ],
+                  for (final s in doc.sections) _SectionView(s),
+                  const SizedBox(height: 22),
+                  Center(child: Image.asset('assets/images/logo_drop.png', height: 18)),
+                ]),
+              ),
             ),
-            child: PrimaryButton(
+      bottomNavigationBar: !widget.showAgree
+          ? null
+          : Container(
+              padding: EdgeInsets.fromLTRB(18, 10, 18, 10 + mq.padding.bottom),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.line)),
+              ),
+              child: PrimaryButton(
                 label: app.t(_reachedEnd ? 'agree' : 'scrollToAgree'),
                 height: 44,
                 radius: 999,
-                onPressed:
-                    _reachedEnd ? () => Navigator.of(context).pop(true) : null),
-          ),
-      ]),
+                onPressed: _reachedEnd ? () => Navigator.of(context).pop(true) : null,
+              ),
+            ),
     );
   }
 }

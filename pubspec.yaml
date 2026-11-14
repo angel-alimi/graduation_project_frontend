@@ -31,6 +31,18 @@ flutter:
     - assets/terms/
 
   fonts:
+    # App text, Arabic and English.
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700
+    # Ooredoo is kept only for the LifeShare wordmark.
     - family: OoredooArabic
       fonts:
         - asset: assets/fonts/OoredooArabic-Light.ttf

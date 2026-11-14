@@ -5,19 +5,26 @@ import '../state/app_state.dart';
 import '../widgets/bottom_bar.dart';
 import '../widgets/common.dart';
 import 'notifications_screen.dart';
-import 'tabs/dashboard_tab.dart';
+import 'sheets/new_request_sheet.dart';
 import 'tabs/feed_tab.dart';
 import 'tabs/profile_tab.dart';
 import 'tabs/requests_tab.dart';
 
-/// Tab indexes, in the order they appear in the bottom bar.
+/// Bottom bar slots, in order. Slot 2 (the red "+", new request) is a button, not a tab.
 class Tabs {
-  static const requests = 0, feed = 1, home = 2, profile = 3;
+  /// Home: my requests and matched requests.
+  static const requests = 0;
+  static const feed = 1;
+  static const newRequest = 2;
+  static const notifications = 3;
+
+  /// Settings (profile, preferences, support).
+  static const settings = 4;
 }
 
-/// Lets any tab switch tabs (e.g. "Donate blood" on the dashboard opens Matched requests).
+/// Lets any screen switch tabs (e.g. a notification opens Matched requests).
 class ShellController extends ChangeNotifier {
-  int index = Tabs.home;
+  int index = Tabs.requests;
   int requestsSegment = 0; // 0 = mine, 1 = matched
   int refreshTick = 0;
 
@@ -35,7 +42,8 @@ class ShellController extends ChangeNotifier {
 }
 
 class ShellScope extends InheritedNotifier<ShellController> {
-  const ShellScope({super.key, required ShellController controller, required super.child})
+  const ShellScope(
+      {super.key, required ShellController controller, required super.child})
       : super(notifier: controller);
 
   static ShellController of(BuildContext context) =>
@@ -59,9 +67,24 @@ class _HomeShellState extends State<HomeShell> {
     super.dispose();
   }
 
-  Future<void> _openNotifications() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsScreen(shell: _shell)));
-    if (mounted) setState(() => _unread = false);
+  @override
+  void initState() {
+    super.initState();
+    // Opening the notifications tab clears the unread dot.
+    _shell.addListener(() {
+      if (_shell.index == Tabs.notifications && _unread) {
+        setState(() => _unread = false);
+      }
+    });
+  }
+
+  /// The red "+": opens the new request form, then shows My requests.
+  Future<void> _newRequest() async {
+    final created = await showNewRequestSheet(context);
+    if (created == true && mounted) {
+      _shell.go(Tabs.requests, segment: 0);
+      _shell.refresh();
+    }
   }
 
   @override
@@ -72,27 +95,29 @@ class _HomeShellState extends State<HomeShell> {
       child: ListenableBuilder(
         listenable: _shell,
         builder: (context, _) {
-          const tabs = [RequestsTab(), FeedTab(), DashboardTab(), ProfileTab()];
+          final tabs = <int, Widget>{
+            Tabs.requests: const RequestsTab(),
+            Tabs.feed: const FeedTab(),
+            Tabs.notifications: const NotificationsTab(),
+            Tabs.settings: const ProfileTab()
+          };
           return Scaffold(
             body: SafeArea(
               bottom: false,
               child: Column(children: [
-                // Header: logo, language, notifications
+                // Header: logo (notifications are in the bottom bar)
                 Container(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20, 10),
-                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.line))),
-                  child: Row(children: [
-                    BrandRow(),
-                    Spacer(),
-                    SquareIconButton(
-                      icon: Icons.notifications_none_rounded,
-                      size: 36,
-                      filled: true,
-                      badge: _unread && app.notificationsOn,
-                      tooltip: app.t('notifications'),
-                      onPressed: _openNotifications,
-                    ),
-                  ]),
+                  height: 54,
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  alignment: Alignment.centerLeft,
+                  decoration: BoxDecoration(
+                      border:
+                          Border(bottom: BorderSide(color: AppColors.line))),
+                  // Fixed left-to-right so the logo never moves with the language.
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: BrandRow(),
+                  ),
                 ),
                 Expanded(
                   child: AnimatedSwitcher(
@@ -102,11 +127,15 @@ class _HomeShellState extends State<HomeShell> {
                     transitionBuilder: (child, a) => FadeTransition(
                       opacity: a,
                       child: SlideTransition(
-                        position: Tween(begin: Offset(0, .015), end: Offset.zero).animate(a),
+                        position:
+                            Tween(begin: Offset(0, .015), end: Offset.zero)
+                                .animate(a),
                         child: child,
                       ),
                     ),
-                    child: KeyedSubtree(key: ValueKey(_shell.index), child: tabs[_shell.index]),
+                    child: KeyedSubtree(
+                        key: ValueKey(_shell.index),
+                        child: tabs[_shell.index]!),
                   ),
                 ),
               ]),
@@ -115,10 +144,15 @@ class _HomeShellState extends State<HomeShell> {
               index: _shell.index,
               onTap: (i) => _shell.go(i),
               items: [
-                BottomBarItem(Icons.assignment_outlined, app.t('tRequests')),
-                BottomBarItem(Icons.home_outlined, app.t('tFeed')),
-                BottomBarItem(Icons.grid_view_rounded, app.t('tHome')),
-                BottomBarItem(Icons.person_outline_rounded, app.t('tProfile')),
+                BottomBarItem(Icons.home_outlined, app.t('tHome')),
+                BottomBarItem(Icons.article_outlined, app.t('tFeed')),
+                BottomBarItem.action(
+                    Icons.add_rounded, app.t('newRequest'), _newRequest,
+                    primary: true),
+                BottomBarItem(
+                    Icons.notifications_none_rounded, app.t('notifications'),
+                    badge: _unread && app.notificationsOn),
+                BottomBarItem(Icons.settings_outlined, app.t('tSettings')),
               ],
             ),
           );

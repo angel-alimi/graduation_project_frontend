@@ -8,7 +8,6 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
 import '../../widgets/inputs.dart';
-import '../../widgets/mascot.dart';
 import '../home_shell.dart';
 
 /// Shared OTP step for sign-up (step 3) and login.
@@ -98,10 +97,10 @@ class _OtpScreenState extends State<OtpScreen> {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: AppColors.bg,
+      barrierColor: AppColors.surface,
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (_, __, ___) => Material(
-        color: AppColors.bg,
+        color: AppColors.surface,
         child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             TweenAnimationBuilder<double>(
@@ -109,12 +108,23 @@ class _OtpScreenState extends State<OtpScreen> {
               duration: const Duration(milliseconds: 700),
               curve: Curves.easeOutBack,
               builder: (_, v, child) => Transform.scale(scale: v, child: child),
-              child: const Mascot(pose: MascotPose.hero, size: 112),
+              child: Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(color: AppColors.redText.withValues(alpha: .12), shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(color: AppColors.red, shape: BoxShape.circle),
+                  child: const Icon(Icons.check_rounded, size: 34, color: Colors.white),
+                ),
+              ),
             ),
-            const SizedBox(height: 14),
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(sub, style: TextStyle(color: AppColors.muted)),
+            const SizedBox(height: 22),
+            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            Text(sub, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: AppColors.muted)),
           ]),
         ),
       ),
